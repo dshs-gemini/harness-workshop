@@ -7,7 +7,7 @@
 > 2. M7을 '프로젝트: 우리 교과 단원 수업 패키지 만들기'로 확장했다. 각자 자기 교과 단원의 수업 슬라이드(`slides.html`)와 Firebase 연동 학생 워크북 웹앱을 만든다.
 > 3. 슬라이드 전면 개편: 연수의 목적을 revfactory/harness 활용으로 맞췄다. 멀티 에이전트 원리 설명과 에이전트·스킬 직접 설계(옛 M5 `difficulty-tagger`, `/lesson`)를 폐기하고, M5를 '하네스가 만든 파일 읽고 고치기'로 바꿨다. M7은 단원 명세 → 하네스에게 팀 구성 요청 → 수업 슬라이드 → 워크북 웹앱 배포 → 배포 주소로 확인 순서로 다시 썼다. 사람은 Firebase 콘솔 설정과 승인만 하고 코드·규칙 파일·배포는 Claude Code가 한다.
 > 4. M6에서 보안 규칙 슬라이드와 규칙 플레이그라운드 실습을 삭제했다. 접근 규칙은 M6에서 설명하지 않고 M7에서 Claude Code가 작성·배포한다. Firebase 항목은 6개(Authentication, Firestore, 요금제, Storage, Hosting, Cloud Functions)다.
-> 5. M7에 '터미널 로그인' 개념 슬라이드(58)와 'Firebase 연결: 미리 로그인해 두기' 실습(59)을 두었다. M1 슬라이드 4와 2에 Windows용 Git for Windows 권장(필수 아님) 안내를 넣었다.
+> 5. M7에 '터미널 로그인' 개념 슬라이드(58)와 'Firebase 연결: 미리 로그인해 두기' 실습(59)을 두었다. M1 슬라이드 4·2와 M4 21·22에 **Git 필수** 안내를 넣었다(Claude Code 설치 자체에는 필요 없지만, 하네스 플러그인 설치의 마켓플레이스 등록이 git으로 GitHub 저장소를 내려받기 때문).
 >
 > **설계자 공지 (오류 처리 규칙에 따라 맨 위에 적음)**
 > 1. **줄인 기능은 없다.** 다만 위 3·4번 변경으로 원본의 `t2-agent-practice`, `t2-skill-design`, `t2-skill-practice`와 Firebase 보안 규칙·규칙 플레이그라운드는 덱에서 의도적으로 제외했다. 섹션 id별 위치는 4절 대조표에 있다.
@@ -42,7 +42,7 @@
 
 ### 사전 준비(연수 안내문, 슬라이드 2에서 점검)
 - Claude Code 설치와 로그인을 미리 끝낸다. Claude Code는 Pro·Max·Team·Enterprise 또는 Console(API) 계정이 필요하고 무료 claude.ai 계정으로는 쓸 수 없다(원본 intro).
-- Windows는 설치 전에 Git for Windows를 깔아 두면 좋다. 공식 setup 문서(2026-10-25 확인)는 이를 권장(선택)으로 적고, 없으면 Claude Code가 Bash 대신 PowerShell로 명령을 실행한다. macOS·Linux·WSL은 필요 없다.
+- **Git은 필수다.** Claude Code 설치에는 필요 없지만, 이 연수의 하네스 플러그인 설치(M4 22의 `/plugin marketplace add revfactory/harness`)는 GitHub 저장소를 git으로 내려받는다. 공식 문서(2026-10-25 확인): Windows에서 git이 없으면 `Failed to clone marketplace repository: Command 'git' not found or is in an unsafe location`로 실패하고, 해결은 Git for Windows 설치다. 모든 OS에서 M1 4번에서 `git --version`으로 미리 확인한다. Windows에서 없으면 Git for Windows를 먼저 설치한다. macOS·Linux의 git 기본 설치 여부는 `[확인필요]`. Git for Windows가 있으면 Claude Code가 Git Bash로 Bash 도구를 쓴다.
 - Firebase 실습용 **개인 구글 계정**을 준비한다. 학교 관리(Workspace) 계정은 프로젝트 생성이 막혀 있을 수 있다 `[확인필요]`. 실제 학생 정보는 쓰지 않는다.
 - Node.js와 Firebase CLI는 M7(59–60)에서 배포할 때 쓴다. 없으면 Claude Code가 설치 여부를 묻고 안내하므로 미리 설치하지 않아도 된다(M6의 Hosting·Functions는 시연만) `[확인필요: 학교 PC 설치 권한]`.
 - 쉬는 시간(33)에 Firebase 콘솔에 개인 구글 계정으로 로그인해 둔다. `firebase login`(터미널)은 M7 59에서 한다.
@@ -213,13 +213,13 @@ M7 내부 경과: 2:00–2:22 슬라이드 단계(53–57, 22분) · 2:22–2:28
 | # | 유형 | 분 | 내용 | 근거 id |
 |---|---|---|---|---|
 | 1 | 정리 | 1 | 표지: 연수 제목, "오늘 가져갈 것 3개"(하네스로 만든 팀을 쓰고 말로 고치는 경험, 우리 교과 단원 수업 패키지를 Firebase Hosting 주소로 확인한 결과, Firebase 기능 지도) | `intro` |
-| 2 | 개념 | 1 | 오늘의 지도: 7개 모듈 로드맵(도식 `.flow`), "앱은 예시 소재일 뿐, 배우는 것은 방법", 준비물 점검(유료 계정, 개인 구글 계정, 실제 학생 정보 금지). 노트에 Windows용 Git for Windows 권장(선택)과 Node.js·Firebase CLI 안내 | `intro` |
+| 2 | 개념 | 1 | 오늘의 지도: 7개 모듈 로드맵(도식 `.flow`), "앱은 예시 소재일 뿐, 배우는 것은 방법", 준비물 점검(유료 계정, 개인 구글 계정, 실제 학생 정보 금지). 노트에 Git 필수(하네스 플러그인 설치에 필요)와 Node.js·Firebase CLI 안내, 본문 준비물 점검에 Git 포함 | `intro` |
 | 3 | 개념 | 2 | 일반 채팅 AI vs Claude Code(카드 2장 비교) + 에이전틱 루프 한 줄. 정의: 에이전트형 도구 | `t1-what` |
-| 4 | 실습 | 4 | 터미널 열기 → `claude --version` 확인(OS 탭). 미설치자용 설치 명령은 공식 setup 문서의 3종(mac·Linux / PowerShell / CMD). 본문에 Windows는 Git for Windows 권장(필수 아님)을 한 줄 | `t1-install` 1–3단계 |
+| 4 | 실습 | 4 | 터미널 열기 → `claude --version` 확인(OS 탭). 미설치자용 설치 명령은 공식 setup 문서의 3종(mac·Linux / PowerShell / CMD). `git --version`도 함께 확인(입력·예상 결과에 포함), 본문 ③에 Git 필수(하네스 플러그인 설치에 필요, Windows는 없으면 Git for Windows 설치)와 막힐 때 안내 | `t1-install` 1–3단계 |
 | 5 | 실습 | 4 | `cd` 이동 → `claude` 실행 → 원본 첫 문장 프롬프트 그대로 | `t1-install` 4–5단계 |
 | 6 | 정리 | 1 | 막힐 때(로그인 창 안 뜸 → 핫스팟, `command not found` → 터미널 재시작, 종료 `/exit`) (실습 시간으로 셈) | `t1-install` 막혔을 때 |
 
-- **주의:** 4번의 버전 출력 `2.1.211`은 예시 숫자임을 표시한다. 3번 노트에 "이름은 코드지만 수업 자료(HTML, 문항)를 만드는 데 쓴다"를 넣는다. 4번에서 Git for Windows는 "권장, 필수 아님"으로만 쓰고 필수 선행 설치처럼 쓰지 않는다(공식 문서: 없으면 PowerShell 도구로 실행).
+- **주의:** 4번의 버전 출력 `2.1.211`은 예시 숫자임을 표시한다. 3번 노트에 "이름은 코드지만 수업 자료(HTML, 문항)를 만드는 데 쓴다"를 넣는다. 4번에서 Git은 "Claude Code 설치에는 필요 없지만 하네스 플러그인 설치에 필수"로 쓴다. 오류 문구(`Failed to clone marketplace repository: Command 'git' not found`)는 막힐 때와 노트에 적는다.
 
 ### M2. 잘 시키는 법: 프롬프트 · 컨텍스트 · 플랜 모드
 - **원본 섹션:** `t1-prompt`, `t1-lesson-draft`
@@ -265,8 +265,8 @@ M7 내부 경과: 2:00–2:22 슬라이드 단계(53–57, 22분) · 2:22–2:28
 | # | 유형 | 분 | 내용 | 근거 id |
 |---|---|---|---|---|
 | 20 | 개념 | 2 | 하네스가 해 주는 일: 혼자 맡길 때의 두 한계(자기 실수를 못 본다 / 모호한 요청을 끝까지 실행한다) → 하네스 정의 → `revfactory/harness` = 말로 요청하면 역할이 나뉜 팀 파일을 만들어 주는 플러그인 → 오늘 얻을 것. 멀티 에이전트의 원리는 설명하지 않는다 | `t2-why` |
-| 21 | 실습 | 2 | 플러그인 설치 전 준비: `mini-harness` 새 폴더에서 `claude` 실행 확인. 실험 플래그·settings.json은 쓰지 않는다 | `t2-quickstart` 1단계 |
-| 22 | 실습 | 5 | 플러그인 설치: 마켓플레이스 등록 → `harness` 설치 → `/plugin`에서 enabled 확인. 서드파티 주의 한 줄(학교 관리 PC는 담당 부서와 상의) | `t2-quickstart` 3단계, 위험 콜아웃 |
+| 21 | 실습 | 2 | 플러그인 설치 전 준비: `git --version` 확인, `mini-harness` 새 폴더에서 `claude` 실행 확인. 실험 플래그·settings.json은 쓰지 않는다. git이 없으면 다음 슬라이드의 마켓플레이스 등록이 실패한다 | `t2-quickstart` 1단계 |
+| 22 | 실습 | 5 | 플러그인 설치: 마켓플레이스 등록 → `harness` 설치 → `/plugin`에서 enabled 확인. 서드파티 주의 한 줄(학교 관리 PC는 담당 부서와 상의). 입력 안내에 Git 필수 표시, 막힐 때에 git 오류 문구와 해결 | `t2-quickstart` 3단계, 위험 콜아웃 |
 | 23 | 실습 | 5 | 말로 팀 만들기: 플랜 모드로 "하네스를 구성해줘" + 형성평가 문항 일을 문장으로 설명 → 계획 확인 → "Yes, manually approve edits" | `t2-quickstart` 4–5단계 |
 | 24 | 실습 | 5 | 팀 실행하고 검수 결과 보기: 만드는 에이전트와 검수 에이전트가 따로 일하고, 검수 쪽이 문항의 문제를 지적하는지 확인 | `t2-quickstart` 6단계 |
 | 25 | 정리 | 2 | 하네스가 만든 것: `mini-harness/.claude/`(에이전트 2개 + 스킬 1개). 에이전트·스킬·오케스트레이터를 한 줄씩 정의 | `t2-pillars`, `t2-quickstart` 팁 |

@@ -36,16 +36,19 @@
 - 본문:
   - 새 폴더 `mini-harness`에서 Claude Code를 연다
   - 이 연수의 플러그인은 별도 설정(실험 플래그 등) 없이 바로 쓸 수 있다
-  - 확인: 폴더 이름과 `claude` 실행 상태만 점검하고 다음 슬라이드로
+  - Git이 필요하다: 다음 슬라이드의 설치는 GitHub 저장소를 git으로 내려받는다(M1 4번에서 확인)
+  - 확인: 폴더 이름과 `claude` 실행 상태, `git --version`만 점검하고 다음 슬라이드로
 - 도식: 2단계 `.flow` (폴더 만들기 → `claude` 실행 확인). 오른쪽에 작은 체크박스 "설정 파일 만지지 않기".
 - 프롬프트:
   터미널에서:
   ```
+  git --version
   mkdir mini-harness && cd mini-harness
   claude
   ```
-- 예상 결과: Claude Code 입력창이 열리고, 현재 폴더가 `mini-harness`로 보인다.
+- 예상 결과: `git --version`에 버전이 나오고, Claude Code 입력창이 열리며, 현재 폴더가 `mini-harness`로 보인다.
 - 막힐 때:
+  - `git`을 찾을 수 없다고 나온다 → Windows는 Git for Windows(git-scm.com/downloads/win)를 설치하고 터미널을 새로 연다. 그 상태에서 `claude`를 다시 실행한다. git이 없으면 다음 슬라이드의 마켓플레이스 등록이 실패한다.
   - `mkdir`가 안 되거나 폴더 위치를 모르겠다 → 지난 실습 폴더(`claude-training`) 바로 아래에 만들어도 된다. 이미 `mini-harness`가 있으면 그 폴더로 `cd`만 한다.
 - 노트: `revfactory/harness` v2는 실험 플래그가 필요 없고, 플래그를 켜 두면 슬라이드 24의 quiz-writer/quiz-checker가 서브에이전트가 아니라 팀원(teammate)으로 실행되어 예시 화면과 달라질 수 있다. 그래서 이 연수에서는 어떤 플래그도 켜지 않는다. 강사용 한 줄: "에이전트 팀"은 별도의 실험 기능이며(플래그 이름 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`는 확인됨) 오늘은 사용하지 않는다. 대화형 세션에서만 동작하고 헤드리스(`-p`)에서는 팀원이 생성되지 않는다. 막힌 참가자는 짝 화면을 함께 보게 한다. (2분)
 
@@ -58,7 +61,7 @@
   - 주의: 커뮤니티가 만든 서드파티. 학교 관리 PC는 담당 부서와 먼저 상의
 - 도식: 2줄 명령 + 아래에 `/plugin` 패널 캡처 자리 표시("harness: enabled").
 - 프롬프트:
-  Claude Code 입력창에서:
+  Claude Code 입력창에서 (Git 필수: 21번에서 `git --version` 확인):
   ```
   /plugin marketplace add revfactory/harness
   /plugin install harness@harness-marketplace
@@ -66,10 +69,11 @@
   확인: `/plugin`
 - 예상 결과: `/plugin` 패널 목록에 `harness`가 보이고 활성화(enabled) 상태.
 - 막힐 때:
+  - `Failed to clone marketplace repository: Command 'git' not found`가 나온다 → git이 없는 것이다. Windows는 Git for Windows를 설치하고 터미널과 Claude Code를 새로 연 뒤 첫 줄부터 다시 한다. 설치 전에 `git --version`으로 확인하면 피할 수 있다.
   - 설치 명령이 인식되지 않는다 → 마켓플레이스 이름이 다를 수 있다. `/plugin` 패널에서 등록된 마켓플레이스 이름을 보고 `harness@<그 이름>`으로 바꾼다.
   - 학교 PC라서 설치가 막힌다 → 짝 화면을 함께 본다.
   - `/plugin install`을 입력했더니 바로 설치되지 않고 패널이 열린다 → 정상이다. 패널에서 설치 범위를 고르고 설치한다.
-- 노트: 세션 안에서 `/plugin install`을 입력하면 설치 범위를 고르는 패널이 열린다(이 패널을 따라가는 시간 때문에 5분). 플러그인 저장소를 "마켓플레이스"로 등록하는 것이 첫 줄, 그 안의 플러그인을 설치하는 것이 둘째 줄이다. 마켓플레이스는 플러그인 카탈로그 저장소이므로, 저장소를 먼저 등록하고 그 안의 플러그인을 설치한다. `revfactory/harness`는 Anthropic이 아니라 개인 개발자가 공개한 오픈소스이고, 플러그인 안의 스킬 문구는 Claude Code가 내 권한으로 실행하므로 낯선 저장소는 설치 전에 코드를 훑어보는 습관이 안전하다. 학교 공용 계정이나 관리 PC에서는 설치 전에 담당 부서와 상의한다(원본 문장 유지). 마켓플레이스 이름 `harness-marketplace`와 두 줄 설치 명령은 검수에서 저장소 기준으로 확인됨. (5분)
+- 노트: 마켓플레이스 등록은 GitHub 저장소를 git으로 내려받으므로 git이 필수다(공식 문서: Windows에서 git이 없으면 `Failed to clone marketplace repository: Command 'git' not found`, 해결은 Git for Windows 설치). 세션 안에서 `/plugin install`을 입력하면 설치 범위를 고르는 패널이 열린다(이 패널을 따라가는 시간 때문에 5분). 플러그인 저장소를 "마켓플레이스"로 등록하는 것이 첫 줄, 그 안의 플러그인을 설치하는 것이 둘째 줄이다. 마켓플레이스는 플러그인 카탈로그 저장소이므로, 저장소를 먼저 등록하고 그 안의 플러그인을 설치한다. `revfactory/harness`는 Anthropic이 아니라 개인 개발자가 공개한 오픈소스이고, 플러그인 안의 스킬 문구는 Claude Code가 내 권한으로 실행하므로 낯선 저장소는 설치 전에 코드를 훑어보는 습관이 안전하다. 학교 공용 계정이나 관리 PC에서는 설치 전에 담당 부서와 상의한다(원본 문장 유지). 마켓플레이스 이름 `harness-marketplace`와 두 줄 설치 명령은 검수에서 저장소 기준으로 확인됨. (5분)
 
 ## [슬라이드 23] 실습: 말로 팀 만들기 (플랜 모드)
 - 유형: 실습

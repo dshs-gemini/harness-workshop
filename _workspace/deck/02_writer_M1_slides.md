@@ -24,9 +24,9 @@
 ## [슬라이드 2] 오늘의 지도
 - 유형: 개념
 - 본문: 앱은 예시 소재일 뿐, 배우는 것은 방법입니다.
-  준비물 점검: 유료 Claude 계정 · 개인 구글 계정 · 실제 학생 정보는 쓰지 않기
+  준비물 점검: 유료 Claude 계정 · 개인 구글 계정 · Git(하네스 설치에 필요) · 실제 학생 정보는 쓰지 않기
 - 도식: `.flow` 가로 도식, 8칸(휴식 포함). 첫 다섯 칸은 Claude Code 기본(M1 첫 대화 → M2 프롬프트 → M3 CLAUDE.md·스킬 → M4 하네스 입문 → M5 하네스가 만든 파일 고치기), 휴식, 이어서 M6 Firebase 지도(27분) → M7 수업 패키지 프로젝트(50분). 현재 위치(M1)를 강조색으로 표시.
-- 노트: 로드맵을 한 번만 훑는다. 앞 절반은 "혼자 쓰는 법과 하네스로 팀 만들기·고치기", 뒤 절반은 "Firebase 기능 지도와 수업 패키지 프로젝트". 마지막 M7은 50분 동안 각자 자기 교과 단원의 슬라이드와 학생 워크북을 만드는 프로젝트이며, 전체는 180분이다. 클래스룸 앱은 "예를 들면"으로만 나온다고 못박는다. 사전 준비 점검(손들기): ① Claude Code는 Pro·Max·Team·Enterprise 또는 Console(API) 계정이 필요하고 무료 claude.ai 계정으로는 쓸 수 없다 ② Firebase 실습용 개인 구글 계정(학교 관리 계정은 프로젝트 생성이 막혀 있을 수 있음 `[확인필요]`) ③ 실제 학생 이름·계정은 쓰지 않는다 ④ Windows는 Git for Windows 설치 권장(선택, 슬라이드 4) ⑤ Node.js·Firebase CLI는 M7에서 배포할 때 쓴다. 없으면 Claude Code가 설치 여부를 묻고 안내하므로 미리 설치하지 않아도 된다(M6의 Hosting·Functions는 시연만) `[확인필요: 학교 PC 설치 권한]`. 학교 관리 PC는 관리자 권한 설치 제한이 있을 수 있다(원본 intro). OS 요구사항: macOS 13.0 이상, Windows 10(1809) 이상. 원본 대비 변경: 원본의 "3.5~4시간, Track 1·2" 구성은 180분 7개 모듈(총 68장)로 재구성했다. (1분)
+- 노트: 로드맵을 한 번만 훑는다. 앞 절반은 "혼자 쓰는 법과 하네스로 팀 만들기·고치기", 뒤 절반은 "Firebase 기능 지도와 수업 패키지 프로젝트". 마지막 M7은 50분 동안 각자 자기 교과 단원의 슬라이드와 학생 워크북을 만드는 프로젝트이며, 전체는 180분이다. 클래스룸 앱은 "예를 들면"으로만 나온다고 못박는다. 사전 준비 점검(손들기): ① Claude Code는 Pro·Max·Team·Enterprise 또는 Console(API) 계정이 필요하고 무료 claude.ai 계정으로는 쓸 수 없다 ② Firebase 실습용 개인 구글 계정(학교 관리 계정은 프로젝트 생성이 막혀 있을 수 있음 `[확인필요]`) ③ 실제 학생 이름·계정은 쓰지 않는다 ④ Git: Claude Code 설치에는 필요 없지만 하네스 플러그인 설치(M4 22번)에는 필수다. `git --version`으로 확인하고, Windows는 없으면 Git for Windows를 설치한다(슬라이드 4) ⑤ Node.js·Firebase CLI는 M7에서 배포할 때 쓴다. 없으면 Claude Code가 설치 여부를 묻고 안내하므로 미리 설치하지 않아도 된다(M6의 Hosting·Functions는 시연만) `[확인필요: 학교 PC 설치 권한]`. 학교 관리 PC는 관리자 권한 설치 제한이 있을 수 있다(원본 intro). OS 요구사항: macOS 13.0 이상, Windows 10(1809) 이상. 원본 대비 변경: 원본의 "3.5~4시간, Track 1·2" 구성은 180분 7개 모듈(총 68장)로 재구성했다. (1분)
 
 ## [슬라이드 3] 채팅 AI와 Claude Code는 무엇이 다른가
 - 유형: 개념
@@ -41,11 +41,12 @@
 - 본문: ① 터미널 열기: macOS는 `⌘+Space`에서 "터미널", Windows는 시작 메뉴에서 "PowerShell"
   ② 아래 명령으로 버전이 보이면 이미 설치된 것입니다.
   (터미널 = 말로 시키는 대신 글자로 명령하는 창)
-  ③ Windows는 설치 전에 Git for Windows를 깔아 두면 좋습니다(권장, 필수 아님). macOS·Linux는 깃이 필요 없습니다.
+  ③ Git도 필요합니다. Claude Code 설치에는 필요 없지만, 하네스 플러그인 설치(M4)에 필수입니다. `git --version`에 버전이 보이면 준비 완료. Windows에서 없으면 Git for Windows를 먼저 설치합니다.
 - 도식: OS 탭 없이 터미널 화면 예시 1장(커서 깜빡이는 창). 아래에 "미설치자용 설치 명령" `.code-block` + OS 탭 3개(macOS / Linux, Windows PowerShell, Windows CMD).
 - 프롬프트: (터미널에 입력. Claude Code에 붙여넣는 문장이 아니라 터미널 명령)
   ```
   claude --version
+  git --version
   ```
   미설치자용 설치 명령(OS 탭):
   - macOS / Linux: `curl -fsSL https://claude.ai/install.sh | bash`
@@ -55,13 +56,15 @@
   ```
   $ claude --version
   2.1.211 (Claude Code)
+  $ git --version
+  git version 2.45.0
   ```
-  `2.1.211`은 예시 숫자입니다. 내 화면의 번호는 달라도 됩니다. 버전 번호가 보이면 성공입니다.
+  `2.1.211`과 `2.45.0`은 예시 숫자입니다. 내 화면의 번호는 달라도 됩니다. 두 명령 모두 버전 번호가 보이면 성공입니다.
 - 막힐 때:
   - `command not found` → 터미널을 완전히 닫았다가 다시 엽니다.
-  - Windows에 Git for Windows가 없으면 → 설치는 그대로 되고, Claude Code가 Bash 대신 PowerShell로 명령을 실행합니다. 수업 실습은 그대로 따라 할 수 있습니다.
+  - `git`을 찾을 수 없다고 나옴 → Windows는 Git for Windows(git-scm.com/downloads/win)를 설치하고 터미널을 새로 엽니다. 설치하지 않으면 M4 22번 플러그인 설치에서 `Failed to clone marketplace repository: Command 'git' not found`로 막힙니다.
   - Windows에서 `irm`이 "인식할 수 없는 명령" → CMD입니다(프롬프트가 `C:\>`). PowerShell(`PS C:\>`)에서 PowerShell 탭 명령을 씁니다.
-- 노트: 이미 설치한 분이 대부분이므로 `claude --version`만 확인시키고 끝낸다. 미설치자는 OS 탭에서 자기 명령을 복사해 붙여넣고 Enter. Windows 참가자에게는 Git for Windows(https://git-scm.com/downloads/win)를 먼저 설치하면 Claude Code가 Git Bash로 Bash 도구를 쓸 수 있다고 안내한다. 공식 setup 문서(2026-10-25 확인)는 이를 '권장(선택)'으로 적고 있으며, 없으면 PowerShell 도구로 대신 실행하므로 필수 선행 설치가 아니다. WSL은 필요 없다. 학교 PC에서 설치 권한이 없으면 건너뛰어도 된다. macOS는 공식 설치 스크립트(네이티브 설치)를 권장하며 Node.js를 먼저 깔 필요가 없다(원본). 프롬프트가 `PS`로 시작하면 PowerShell, `C:\>`만 보이면 CMD. 설치 명령 3종은 원본 그대로 옮겼고 공식 setup 문서와 일치한다(검수 확인). 학교 관리 PC에서 설치가 막히면 짝 화면 함께 보기, 강사 화면 따라 보기로 전환한다. 원본 대비 변경: 원본 1~3단계를 한 장으로 합쳤고 1단계 터미널 열기는 본문으로 압축. (4분)
+- 노트: 이미 설치한 분이 대부분이므로 `claude --version`만 확인시키고 끝낸다. 미설치자는 OS 탭에서 자기 명령을 복사해 붙여넣고 Enter. Git은 Claude Code 설치에는 필요 없지만, 이 연수의 하네스 플러그인 설치(M4 22번의 `/plugin marketplace add revfactory/harness`)에는 필수다. 마켓플레이스를 GitHub 저장소에서 git으로 내려받기 때문이다. 공식 문서(plugin 문서와 troubleshooting, 2026-10-25 확인)에 따르면 Windows에서 git이 없으면 마켓플레이스 등록이 `Failed to clone marketplace repository: Command 'git' not found or is in an unsafe location`로 실패하고, 해결은 Git for Windows(https://git-scm.com/downloads/win) 설치 후 다시 시도하는 것이다. 그래서 M1에서 `git --version`으로 미리 확인시킨다. macOS·Linux도 같은 명령으로 확인하고, 없으면 설치 방법을 Claude Code나 강사에게 묻는다 `[확인필요: OS별 git 기본 설치 여부]`. Git for Windows가 있으면 Claude Code가 Git Bash로 Bash 도구를 쓸 수 있다(없으면 PowerShell 도구로 대신). 학교 PC에서 설치 권한이 없으면 짝 화면을 함께 보거나 강사 화면을 따라 본다. macOS는 공식 설치 스크립트(네이티브 설치)를 권장하며 Node.js를 먼저 깔 필요가 없다(원본). 프롬프트가 `PS`로 시작하면 PowerShell, `C:\>`만 보이면 CMD. 설치 명령 3종은 원본 그대로 옮겼고 공식 setup 문서와 일치한다(검수 확인). 학교 관리 PC에서 설치가 막히면 짝 화면 함께 보기, 강사 화면 따라 보기로 전환한다. 원본 대비 변경: 원본 1~3단계를 한 장으로 합쳤고 1단계 터미널 열기는 본문으로 압축. (4분)
 
 ## [슬라이드 5] 실습 폴더에서 첫 대화
 - 유형: 실습
