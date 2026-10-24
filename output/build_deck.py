@@ -645,6 +645,28 @@ def footer(n, total, code):
             '<span class="ft-num"><b>%d</b> / %d</span></footer>' % (TRACK_LABEL[TRACK_OF[code]], "".join(segs), n, total))
 
 
+TABLE_RE = re.compile(r"<table>(.*?)</table>", re.S)
+
+
+def mark_nowrap_tables(h):
+    """셀 글이 짧은 표는 줄바꿈을 막는다(괄호 하나 때문에 첫 열이 꺾이는 것 방지).
+    모든 셀이 짧으면 표 전체(nw), 첫 열만 짧으면 첫 열(nw1)에 적용한다. 자리가 모자라면 JS 맞춤이 글자를 줄인다."""
+    def one(m):
+        rows = re.findall(r"<tr>(.*?)</tr>", m.group(1), re.S)
+        cells = [re.findall(r"<t[dh][^>]*>(.*?)</t[dh]>", r, re.S) for r in rows]
+        txt = [[html.unescape(re.sub(r"<[^>]+>", "", c)).strip() for c in r] for r in cells if r]
+        if not txt:
+            return m.group(0)
+        first = max(len(r[0]) for r in txt)
+        allmax = max(len(c) for r in txt for c in r)
+        if allmax <= 30:
+            return '<table class="nw">' + m.group(1) + "</table>"
+        if first <= 26:
+            return '<table class="nw1">' + m.group(1) + "</table>"
+        return m.group(0)
+    return TABLE_RE.sub(one, h)
+
+
 def build_slide(s, total):
     n = s["n"]
     code, mname = module_of(n)
@@ -659,7 +681,7 @@ def build_slide(s, total):
         layout = res[1] if len(res) > 1 else ""
         fsmax = res[2] if len(res) > 2 else 32
         res = res[0]
-    inner = res
+    inner = mark_nowrap_tables(res)
     tags = "".join('<span class="tag">%s</span>' % esc(t) for t in p["tags"])
     if p["has_check"]:
         tags += chk_badge()
@@ -971,6 +993,10 @@ td{padding:.42em .6em;border-bottom:var(--hair);vertical-align:top}
 td:first-child{font-weight:700}
 tbody tr:last-child td{border-bottom:1.5px solid var(--ink-3)}
 td code{font-size:.82em;white-space:nowrap;word-break:normal}
+table.nw th,table.nw td{white-space:nowrap}
+table.nw1 th:first-child,table.nw1 td:first-child{white-space:nowrap}
+.ptbl table.nw,.ptbl table.nw1{table-layout:auto}
+.ptbl table.nw th:first-child,.ptbl table.nw td:first-child,.ptbl table.nw1 th:first-child,.ptbl table.nw1 td:first-child{width:auto}
 
 /* ---------- 아래 띠: 예상 결과 · 막힐 때 ---------- */
 .band{flex:none;display:grid;grid-template-columns:1fr 1.35fr;gap:0 var(--s7);border-top:1.5px solid var(--ink);padding-top:var(--s3);margin-bottom:var(--s3);
