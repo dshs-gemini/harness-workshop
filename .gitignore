@@ -1,0 +1,6 @@
+node_modules/
+__pycache__/
+.DS_Store
+output/render/
+_workspace/deck/render/
+_workspace/deck/render2/

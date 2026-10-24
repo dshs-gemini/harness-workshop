@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Claude Code 하네스와 Firebase 기능 지도 (슬라이드)</title><style>
+:root{
+  /* 색: 종이·잉크(따뜻한 중립) */
+  --paper:#f8f2e4; --paper-hi:#fcf8ef; --paper-2:#f2e9d5; --paper-3:#e8dcc2;
+  --ink:#2a2314; --ink-2:#4b412d; --ink-3:#74664a; --ink-4:#a69576;
+  --rule:#ddd0b4; --rule-2:#c6b48e;
+  /* 색: 역할 */
+  --accent:#b0402c; --accent-2:#8d3020; --accent-wash:#f3e0d4;
+  --teal:#356e67; --teal-2:#285650; --teal-wash:#deeae4;
+  --blue:#2f5f98; --blue-2:#244a77; --blue-wash:#e1e7ef;
+  --ochre:#8a6420; --ochre-2:#6e4f17; --ochre-wash:#f1e4c4;
+  --night:#231d14; --night-2:#2f271b; --night-rule:#4a3f2c; --on-night:#efe5cf; --on-night-2:#b3a483;
+  --sy-key:#eaa283; --sy-head:#f0c987; --sy-fm:#8f8268; --sy-file:#9fd0c4;
+  /* 글꼴: 시스템 한글 스택과 모노 스택만 */
+  --font:"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR","Noto Sans CJK KR","Nanum Gothic","Segoe UI",system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,"D2Coding","Noto Sans Mono","Liberation Mono",monospace;
+  /* 타입 스케일(무대 1280x720 기준 px) */
+  --t-cover:86px; --t-chapter:150px; --t-title:46px; --t-lead:36px; --t-body:28px; --t-small:24px; --t-aux:21px; --t-label:15px;
+  /* 간격 스케일 */
+  --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
+  --pad-x:64px; --rail:248px;
+  /* 선·모서리 규칙: 상자는 거의 각지게, 선은 머리카락 선 + 강조 굵은 선 두 가지 */
+  --r-s:3px; --r-m:6px; --r-l:10px;
+  --hair:1px solid var(--rule); --rule-ink:2px solid var(--ink);
+  --tone:var(--blue); --tone-2:var(--blue-2); --tone-wash:var(--blue-wash);
+}
+.slide[data-track="t1"]{--tone:var(--blue);--tone-2:var(--blue-2);--tone-wash:var(--blue-wash)}
+.slide[data-track="t2"]{--tone:var(--teal);--tone-2:var(--teal-2);--tone-wash:var(--teal-wash)}
+.slide[data-track="fb"]{--tone:var(--ochre);--tone-2:var(--ochre-2);--tone-wash:var(--ochre-wash)}
+.slide[data-track="wrap"]{--tone:var(--accent);--tone-2:var(--accent-2);--tone-wash:var(--accent-wash)}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:#17130d;overflow:hidden;font-family:var(--font);color:var(--ink);
+  -webkit-font-smoothing:antialiased;font-kerning:normal;word-break:keep-all;overflow-wrap:break-word}
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#stage{width:1280px;height:720px;position:relative;transform-origin:center center;flex:none;background:var(--paper);overflow:hidden;box-shadow:0 10px 50px rgba(0,0,0,.5)}
+
+/* ---------- 슬라이드 뼈대 ---------- */
+.slide{--fs:30px;--fp:24px;--fr:22px;--fk:22px;--ft:var(--t-title);
+  position:absolute;inset:0;background:var(--paper);visibility:hidden;opacity:0;font-size:var(--fs);line-height:1.42;
+  padding:0 var(--pad-x);display:flex;flex-direction:column;transition:opacity .18s ease,visibility 0s linear .18s}
+.slide.on{visibility:visible;opacity:1;transition:opacity .18s ease}
+@media (prefers-reduced-motion:reduce){.slide,.slide.on{transition:none}}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);height:56px;padding-top:20px;flex:none;
+  font-size:var(--t-label);line-height:1;color:var(--ink-3);white-space:nowrap}
+.hd-mod{font-weight:600;letter-spacing:.01em;display:flex;align-items:center;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.hd-mod b{display:inline-block;padding:4px 7px 3px;margin-right:10px;background:var(--tone);color:#fff;border-radius:var(--r-s);font-weight:800;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.hd-meta{display:flex;align-items:center;gap:10px}
+.kind{display:inline-flex;align-items:center;gap:6px;padding:4px 10px 3px;border-radius:var(--r-s);font-weight:800;letter-spacing:.06em;border:1.5px solid currentColor}
+.kind:before{content:"";width:7px;height:7px;background:currentColor}
+.k-개념.kind{color:var(--ink-2)}
+.k-개념.kind:before{border-radius:50%}
+.k-실습.kind{background:var(--accent);border-color:var(--accent);color:#fff}
+.k-점검.kind{color:var(--ochre-2);background:var(--ochre-wash);border-color:var(--ochre)}
+.k-점검.kind:before{transform:rotate(45deg);width:6px;height:6px}
+.k-정리.kind{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.tag{color:var(--ink-3);font-weight:600}
+.tag:before{content:"·";margin-right:10px;color:var(--ink-4)}
+.chk{display:inline-block;padding:.14em .5em .1em 1.25em;margin:0 .15em;position:relative;border-radius:var(--r-s);
+  font:700 max(14px,.5em)/1.3 var(--font);letter-spacing:.02em;background:var(--ochre-wash);color:var(--ochre-2);
+  box-shadow:inset 0 0 0 1px rgba(138,100,32,.38);vertical-align:.18em;white-space:nowrap}
+.chk:before{content:"";position:absolute;left:.5em;top:50%;width:.42em;height:.42em;margin-top:-.21em;border-radius:50%;border:1.5px solid var(--ochre)}
+.hd-chk{font-size:14px;vertical-align:baseline}
+.title{margin:8px 0 0;font-size:var(--ft);line-height:1.16;font-weight:800;letter-spacing:-.028em;flex:none;color:var(--ink);text-wrap:balance;max-width:1100px}
+.title code{font-size:.8em}
+.body{flex:1;min-height:0;display:flex;gap:var(--s7);margin-top:24px;margin-bottom:var(--s4);overflow:hidden}
+.col{min-width:0;min-height:0;overflow:hidden;display:flex;flex-direction:column;gap:var(--s3)}
+.ft{flex:none;height:40px;display:flex;align-items:center;gap:var(--s5);font-size:13px;color:var(--ink-3);border-top:var(--hair);letter-spacing:.02em}
+.ft-tr{font-weight:700;min-width:190px}
+.ft-bar{flex:1;display:flex;gap:3px;height:4px}
+.ft-bar i{position:relative;background:var(--paper-3);overflow:hidden}
+.ft-bar i.past{background:var(--ink-4)}
+.ft-bar i b{position:absolute;left:0;top:0;bottom:0;background:var(--tone)}
+.ft-num{font-variant-numeric:tabular-nums;min-width:56px;text-align:right}
+.ft-num b{color:var(--ink);font-weight:800}
+.slide>*{position:relative;z-index:1}
+.notes{display:none}
+
+/* ---------- 본문 타이포 ---------- */
+p{margin:0}
+strong{font-weight:800;color:var(--ink);background:linear-gradient(transparent 64%,var(--tone-wash) 64%)}
+ul,ol{margin:0;padding:0;list-style:none}
+li{position:relative;padding-left:1.05em;margin:.18em 0}
+ul>li:before{content:"";position:absolute;left:.08em;top:.6em;width:.3em;height:.3em;background:var(--tone)}
+ol{counter-reset:c}
+ol>li{counter-increment:c;padding-left:1.6em}
+ol>li:before{content:counter(c);position:absolute;left:0;top:.08em;width:1.22em;height:1.22em;border-radius:50%;
+  border:2px solid var(--tone);color:var(--tone-2);font-size:.74em;font-weight:800;text-align:center;line-height:1.08em;font-variant-numeric:tabular-nums}
+li ul,li ol{font-size:.86em;margin-top:.15em}
+li li:before{background:var(--ink-4)}
+code{font-family:var(--mono);font-size:.86em;background:var(--paper-3);padding:.04em .32em;border-radius:var(--r-s);color:var(--accent-2);
+  word-break:normal;overflow-wrap:anywhere;font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
+pre{margin:0;white-space:pre-wrap;word-break:normal;overflow-wrap:anywhere;font-family:var(--mono);font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
+pre code{background:none;padding:0;color:inherit;font-size:inherit;border-radius:0}
+.lbl{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;letter-spacing:.1em;color:var(--ink-3);margin:0 0 var(--s2);line-height:1.2}
+.lbl:before{content:"";width:9px;height:9px;background:currentColor}
+.l-res{color:var(--teal)} .l-stk{color:var(--accent)} .l-in{color:var(--accent)} .l-step{color:var(--ink-3)}
+.aside{font-size:.8em;color:var(--ink-3);margin-top:var(--s3)}
+.ph{display:inline-flex;align-items:center;gap:.5em;padding:.35em .9em;border:1.5px dashed var(--ink-4);border-radius:var(--r-m);
+  color:var(--ink-3);font-size:max(20px,.72em);font-weight:700;line-height:1.3;
+  background:repeating-linear-gradient(135deg,transparent 0 9px,rgba(166,149,118,.12) 9px 18px)}
+li:has(>.ph:only-child){padding-left:0}
+li:has(>.ph:only-child):before{display:none}
+
+/* ---------- 코드·프롬프트 패널 ---------- */
+.prompt-box,.file-box,.terminal,.code-block{position:relative;background:var(--night);color:var(--on-night);border-radius:var(--r-m);
+  padding:42px 20px 16px;font-size:var(--fp);line-height:1.46;margin:0 0 var(--s3)}
+.prompt-box:before,.terminal:before,.code-block:before{position:absolute;left:20px;top:13px;font:800 13px/1 var(--font);letter-spacing:.12em;color:var(--on-night-2)}
+.prompt-box:before{content:"입력";color:#f0a58c}
+.terminal:before{content:"화면 예시"}
+.code-block:before{content:"코드"}
+.prompt-box:after,.file-box:after,.terminal:after,.code-block:after{content:"";position:absolute;left:0;right:0;top:34px;border-top:1px solid var(--night-rule)}
+.prompt-box{box-shadow:inset 4px 0 0 var(--accent)}
+.file-box{box-shadow:inset 4px 0 0 var(--teal)}
+.file-box .fb-title{position:absolute;left:20px;top:11px;right:90px;font:700 14px/1.2 var(--mono);color:var(--sy-file);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.terminal pre{color:#d8ecd0}
+.sy-key{color:var(--sy-key)} .sy-head{color:var(--sy-head);font-weight:700} .sy-fm{color:var(--sy-fm)}
+.copy{position:absolute;top:7px;right:10px;font:700 13px/1 var(--font);padding:5px 11px;border-radius:var(--r-s);border:1px solid var(--night-rule);
+  background:transparent;color:var(--on-night-2);cursor:pointer;letter-spacing:.06em}
+.copy:hover{color:var(--on-night);border-color:var(--on-night-2)}
+.copy.done{background:var(--teal);border-color:var(--teal);color:#fff}
+.copy:focus-visible,.tile:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.rescode .prompt-box,.rescode .file-box,.rescode .terminal,.rescode .code-block{font-size:var(--fr)}
+.grp>p{font-size:.78em;color:var(--ink-3);margin:0 0 var(--s2)}
+.grp.prose>p{font-size:.9em;color:var(--ink-2)}
+.grp.prose>ol,.grp.prose>ul{font-size:1em}
+.grp.prose>ol>li{margin:.15em 0 .45em}
+.grp>ul,.grp>ol{font-size:.82em;margin-bottom:var(--s2)}
+.flowline{display:inline-flex;flex-wrap:wrap;align-items:center;gap:.2em;vertical-align:baseline}
+.chip{display:inline-block;padding:0 .45em;border:1.5px solid var(--tone);background:var(--tone-wash);border-radius:var(--r-s);font-size:.9em}
+.arr{color:var(--accent);font-weight:800;margin:0 .1em}
+
+/* ---------- 표 ---------- */
+table{border-collapse:collapse;width:100%;font-size:.86em;line-height:1.32;font-variant-numeric:tabular-nums}
+th{text-align:left;font-size:.84em;font-weight:800;letter-spacing:.04em;color:var(--ink-3);padding:.3em .6em .4em;border-bottom:var(--rule-ink);vertical-align:bottom}
+td{padding:.42em .6em;border-bottom:var(--hair);vertical-align:top}
+td:first-child{font-weight:700}
+tbody tr:last-child td{border-bottom:1.5px solid var(--ink-3)}
+td code{font-size:.82em;white-space:nowrap;word-break:normal}
+
+/* ---------- 아래 띠: 예상 결과 · 막힐 때 ---------- */
+.band{flex:none;display:grid;grid-template-columns:1fr 1.35fr;gap:0 var(--s7);border-top:1.5px solid var(--ink);padding-top:var(--s3);margin-bottom:var(--s3);
+  font-size:var(--fk);line-height:1.4;max-height:250px}
+.band.n1{grid-template-columns:1fr}
+.cell{min-width:0;overflow:hidden}
+.cell p{margin:0 0 .2em}
+.band.n1 .stk ul{display:grid;grid-template-columns:1fr 1fr;gap:0 var(--s7)}
+.band.n1 .stk ul:has(>li:only-child){display:block}
+.cell li{margin:.1em 0}
+.stk li:before{background:var(--accent)}
+.res li:before{background:var(--teal)}
+.nostuck .cell.stk,.nostuck .stkbox{display:none}
+.nostuck .band.n2{grid-template-columns:1fr}
+.nostuck .band.n1{display:none}
+
+/* ---------- 템플릿: 진술(개념) ---------- */
+.stmt .col{flex:1;justify-content:safe center;gap:0}
+.stmt ul{counter-reset:k}
+.stmt .col>ul>li,.stmt .col>ol>li{counter-increment:k;padding:.5em 0 .52em 2.1em;margin:0;border-top:var(--hair);font-weight:500}
+.stmt .col>ul>li:first-child,.stmt .col>ol>li:first-child{border-top:var(--rule-ink)}
+.stmt .col>ul>li:last-child,.stmt .col>ol>li:last-child{border-bottom:var(--hair)}
+.stmt .col>ul>li:before,.stmt .col>ol>li:before{content:counter(k,decimal-leading-zero);left:0;top:.82em;width:auto;height:auto;background:none;border:0;border-radius:0;
+  font-size:.56em;font-weight:800;color:var(--tone);letter-spacing:.04em;line-height:1;font-variant-numeric:tabular-nums}
+.stmt .col>p{color:var(--ink-2);margin:.3em 0}
+.stmt .col>p:first-child{font-size:1.24em;font-weight:800;color:var(--ink);letter-spacing:-.02em;line-height:1.28;margin-bottom:.5em}
+
+/* ---------- 템플릿: 정리 ---------- */
+.summ .col{flex:1;justify-content:safe center;gap:0}
+.summ .col>ul{counter-reset:k;display:flex;flex-direction:column}
+.summ .col>ul>li{counter-increment:k;position:relative;padding:.42em 0 .42em 2.1em;margin:0;border-top:var(--hair);font-weight:600;letter-spacing:-.01em}
+.summ .col>ul>li:first-child{border-top:var(--rule-ink)}
+.summ .col>ul>li:before{content:counter(k);position:absolute;left:0;top:.3em;width:auto;height:auto;background:none;font-size:1.3em;font-weight:800;color:var(--tone);line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+.summ .col>ul>li>ul{font-weight:500}
+.summ .col>p{margin:.2em 0}
+.summ .col>p:first-child{font-size:1.2em;font-weight:800;letter-spacing:-.02em}
+
+/* ---------- 템플릿: 질문(점검) ---------- */
+.quest{position:relative}
+.quest .q-main{flex:1;justify-content:safe center;position:relative;border-left:6px solid var(--ochre);padding-left:28px}
+.quest.has-side .q-main{flex:0 0 44%}
+.quest .q-side{flex:1;justify-content:safe center}
+.qmark{display:none;position:absolute;right:-.06em;top:50%;transform:translateY(-54%);font-size:330px;line-height:1;font-weight:800;color:var(--ochre-wash);z-index:-1;letter-spacing:-.05em}
+.quest.has-side .qmark{right:auto;left:-.04em;opacity:.8}
+.quest .q-main>ul>li:first-child,.quest .q-main>p:first-of-type{font-size:1.28em;font-weight:800;letter-spacing:-.025em;line-height:1.3;padding-left:0;margin-bottom:.55em}
+.quest .q-main>ul>li:first-child:before{display:none}
+.quest .q-main>ul>li{color:var(--ink-2)}
+.quest .q-main>ul>li:before{background:var(--ochre)}
+
+/* ---------- 템플릿: 분할(서술 + 시각물) ---------- */
+.split>.col:first-child{flex:0 0 38%;justify-content:safe center}
+.split.r30>.col:first-child{flex:0 0 31%}
+.split.r50>.col:first-child{flex:0 0 47%}
+.split>.vis{flex:1;justify-content:safe center}
+.split>.col:first-child>ul>li{margin:.1em 0 .55em}
+.split>.col:first-child>p:first-child{font-size:1.14em;font-weight:800;letter-spacing:-.02em;line-height:1.3;margin-bottom:.4em}
+.split>.col:first-child>p+p{color:var(--ink-2);margin-top:.35em}
+.panel{border-top:var(--rule-ink);padding-top:var(--s4);font-size:.9em}
+.panel>ul>li,.panel>ol>li{margin:.1em 0 .45em}
+.panel>p{margin:.3em 0}
+.panel table{font-size:.92em}
+.panel>*+table,.panel>table+*{margin-top:var(--s4)}
+.stack{flex-direction:column;gap:var(--s5)}
+.stack>.lead{flex:none}
+.stack>.vis{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:safe center}
+.stack>.lead>p:first-child{font-size:1.1em;font-weight:800;letter-spacing:-.02em}
+.stack>.lead>p.sub2{font-size:.86em;color:var(--ink-3);font-weight:600;margin-top:.3em}
+
+/* ---------- 템플릿: 실습 ---------- */
+.prac>.col.steps{flex:0 0 37%}
+.prac>.col.main{flex:1}
+.tl{counter-reset:none;display:flex;flex-direction:column;gap:0}
+.tl>li{display:grid;grid-template-columns:1.55em 1fr;gap:0 .55em;padding:0 0 .7em;margin:0;position:relative}
+.tl>li:before{content:"";position:absolute;left:.72em;top:1.3em;bottom:.1em;width:2px;background:var(--rule);border:0;border-radius:0;height:auto}
+.tl>li:last-child:before{display:none}
+.tl .sn{width:1.36em;height:1.36em;border-radius:50%;background:var(--accent);color:#fff;font-size:.82em;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:.12em;font-variant-numeric:tabular-nums}
+.tl .st{min-width:0}
+.tl .st>ul{font-size:.86em}
+.tl-h{flex-direction:row;gap:var(--s6)}
+.tl-h>li{flex:1;padding:0}
+.tl-h>li:before{display:none}
+.prac.heavy{gap:var(--s6)}
+.prac.heavy>.col:first-child{flex:0 0 51%}
+.prac.heavy>.col:last-child{flex:1}
+.prac.heavy .prompt-box{flex:none}
+.tl-c>li{padding-bottom:.35em}
+.heavy .rescode .cols2 pre{column-count:2;column-gap:28px;column-rule:1px solid var(--night-rule)}
+.heavy .resbox{margin-top:var(--s2);margin-bottom:var(--s3)}
+.prac .grp{min-width:0}
+.prac .diag ol>li:before{border-color:var(--accent);color:var(--accent-2)}
+.prac .diag>ol>li{margin:.05em 0 .4em}
+.prac .diag table{font-size:.84em}
+
+/* ---------- 템플릿: 표 중심 ---------- */
+.tbl{flex-direction:column;gap:var(--s5)}
+.tbl>.lead{flex:none}
+.tbl>.lead>ul{display:flex;flex-direction:column;gap:.1em}
+.tbl>.tw{flex:1;min-height:0}
+.tbl table{font-size:.9em}
+
+/* ---------- 모듈 첫 슬라이드: 왼쪽 레일 ---------- */
+.slide.opener{padding-left:calc(var(--rail) + 56px)}
+.rail{position:absolute!important;left:0;top:0;bottom:0;width:var(--rail);background:var(--tone);color:#fbf5e8;padding:30px 28px 28px;display:flex;flex-direction:column;z-index:2}
+.rlab{font-size:14px;font-weight:800;letter-spacing:.22em;opacity:.75}
+.rbig{display:flex;align-items:flex-start;margin:6px 0 2px;line-height:.86;font-weight:800;letter-spacing:-.05em;font-variant-numeric:tabular-nums}
+.rk{font-size:46px;margin-top:12px;opacity:.7;letter-spacing:0}
+.rn{font-size:var(--t-chapter)}
+.rw{font-size:64px;letter-spacing:-.04em;margin-top:10px}
+.rname{font-size:24px;font-weight:800;line-height:1.28;letter-spacing:-.02em;margin-top:6px}
+.rail dl{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:20px 0 0;padding-top:14px;border-top:1px solid rgba(255,255,255,.35);font-size:20px;line-height:1.2}
+.rail dt{opacity:.72}.rail dd{margin:0;font-weight:700;font-variant-numeric:tabular-nums}
+.rg{margin-top:auto;padding-top:14px;border-top:1px solid rgba(255,255,255,.35)}
+.rg .lbl{color:#fbf5e8;opacity:.75}
+.rg p{font-size:20px;line-height:1.42}
+.rg code{background:rgba(255,255,255,.16);color:#fff}
+.rail strong{background:none;color:#fff}
+
+/* ---------- 도식(인라인 SVG) ---------- */
+.dg{display:block;width:100%;height:auto;overflow:visible;font-family:var(--font)}
+.dg text{fill:var(--ink);font-family:var(--font)}
+.dg .mono{font-family:var(--mono)}
+.dg .num{font-variant-numeric:tabular-nums;font-weight:600}
+.dg .b{font-weight:800}.dg .m{font-weight:600}
+.dg .t2{fill:var(--ink-2)}.dg .t3{fill:var(--ink-3)}.dg .tw{fill:#fff}.dg .tp{fill:var(--paper)}
+.dg .tt{fill:var(--tone-2)}.dg .ta{fill:var(--accent-2)}.dg .tteal{fill:var(--teal-2)}.dg .tb{fill:var(--blue-2)}.dg .to{fill:var(--ochre-2)}
+.dg .n{fill:var(--paper-hi);stroke:var(--rule-2);stroke-width:1.5}
+.dg .n2{fill:var(--paper-2);stroke:none}
+.dg .nt{fill:var(--tone-wash);stroke:var(--tone);stroke-width:1.5}
+.dg .ntf{fill:var(--tone);stroke:none}
+.dg .na{fill:var(--accent);stroke:none}
+.dg .naw{fill:var(--accent-wash);stroke:var(--accent);stroke-width:1.5}
+.dg .nteal{fill:var(--teal-wash);stroke:var(--teal);stroke-width:1.5}
+.dg .nblue{fill:var(--blue-wash);stroke:var(--blue);stroke-width:1.5}
+.dg .noch{fill:var(--ochre-wash);stroke:var(--ochre);stroke-width:1.5}
+.dg .nk{fill:var(--ink);stroke:none}
+.dg .nd{fill:none;stroke:var(--ink-4);stroke-width:1.5;stroke-dasharray:6 5}
+.dg .nm{fill:var(--paper-2);stroke:var(--rule-2);stroke-width:1.5;stroke-dasharray:6 5}
+.dg .ln{fill:none;stroke:var(--ink-3);stroke-width:2}
+.dg .ln.acc{stroke:var(--accent)} .dg .ln.teal{stroke:var(--teal)} .dg .ln.tone{stroke:var(--tone)} .dg .ln.mute{stroke:var(--ink-4);stroke-dasharray:5 5}
+.dg .ln.thick{stroke-width:3}
+.dg .rule{stroke:var(--rule);stroke-width:1.5}
+.dg .fa{fill:var(--accent)} .dg .ft2{fill:var(--tone)} .dg .fi{fill:var(--ink)} .dg .fi3{fill:var(--ink-3)} .dg .fw{fill:var(--paper-hi)} .dg .fteal{fill:var(--teal)}
+#svgdefs{position:absolute;width:0;height:0;overflow:hidden}
+#ah-ink path{fill:var(--ink-3)} #ah-acc path{fill:var(--accent)} #ah-teal path{fill:var(--teal)} #ah-mute path{fill:var(--ink-4)}
+#ah-blue path{fill:var(--blue)} #ah-ochre path{fill:var(--ochre)} #ah-paper path{fill:#efe5cf}
+
+/* ---------- 카드(쓰는 곳에만) ---------- */
+.cards{display:grid;gap:var(--s5)}
+.card{border-top:var(--rule-ink);padding-top:var(--s3);min-width:0}
+.card h4{margin:0 0 .3em;font-size:1em;font-weight:800;letter-spacing:-.015em;line-height:1.25}
+.card .ey{font-size:14px;font-weight:800;letter-spacing:.12em;color:var(--tone);margin-bottom:6px}
+.card.good{border-top-color:var(--teal)} .card.good .ey{color:var(--teal)}
+.card.bad{border-top-color:var(--accent)} .card.bad .ey{color:var(--accent)}
+.card.mute{border-top-color:var(--ink-4);color:var(--ink-3)}
+.card p{margin:.2em 0}
+.warn{display:flex;gap:.6em;align-items:baseline;padding:.45em .8em;border-left:4px solid var(--accent);background:var(--accent-wash);font-size:.86em;font-weight:600}
+.warn:before{content:"주의";font-size:14px;font-weight:800;letter-spacing:.12em;color:var(--accent);flex:none}
+.quote{font-size:1.5em;font-weight:800;letter-spacing:-.03em;line-height:1.2;padding-left:.6em;border-left:6px solid var(--accent)}
+.quote small{display:block;font-size:.48em;font-weight:600;color:var(--ink-3);letter-spacing:.02em;margin-top:.35em}
+.deep{border:1.5px dashed var(--ink-4);padding:.5em .8em;font-size:.82em;color:var(--ink-2);border-radius:var(--r-m)}
+.deep:before{content:"심화 선택";display:block;font-size:14px;font-weight:800;letter-spacing:.12em;color:var(--ink-3);margin-bottom:4px}
+.box{display:inline-block;border:2px solid var(--ink);min-width:1.1em;height:1.1em;vertical-align:-.15em;margin-right:.35em}
+.stamp{display:inline-flex;align-items:center;justify-content:center;width:2.6em;height:2.6em;border-radius:50%;border:3px solid var(--accent);color:var(--accent);
+  font-weight:800;font-size:.7em;transform:rotate(-12deg);letter-spacing:.02em;flex:none;box-shadow:inset 0 0 0 3px var(--paper),inset 0 0 0 4.5px var(--accent)}
+
+
+/* ---------- 슬라이드별 도식 보조 ---------- */
+.c2{grid-template-columns:1fr 1fr;gap:var(--s7)}
+.c3{grid-template-columns:repeat(3,1fr)}
+.c4{grid-template-columns:repeat(4,1fr)}
+.c-req{grid-template-columns:1fr;gap:var(--s5)}
+.c-req .q{font-size:1.05em;font-weight:600;line-height:1.5}
+.c-req .bad .q{color:var(--ink-3)}
+mark{background:none;color:inherit;padding:0 .1em;border-bottom:4px solid;border-radius:0}
+mark.m1,.mlegend .m1{border-color:var(--blue)} mark.m2,.mlegend .m2{border-color:var(--teal)}
+mark.m3,.mlegend .m3{border-color:var(--ochre)} mark.m4,.mlegend .m4{border-color:var(--accent)}
+.mlegend{display:flex;gap:var(--s5);margin-top:var(--s3);font-size:.78em;font-weight:800;color:var(--ink-2)}
+.mlegend span{border-bottom:4px solid;padding-bottom:2px}
+.vis-in{margin-top:var(--s4)}
+.modes td:last-child code{background:var(--night);color:var(--on-night);white-space:nowrap;font-size:.8em;padding:.15em .5em}
+.modes td:first-child{white-space:nowrap}
+.checks{counter-reset:none;display:flex;flex-direction:column;font-size:.74em}
+.checks>li{display:flex;gap:.6em;align-items:flex-start;padding:.38em 0;margin:0;border-top:var(--hair)}
+.checks>li:before{display:none}
+.checks .box{flex:none;margin-top:.1em}
+.tally{display:flex;align-items:center;gap:.6em;margin-top:var(--s4);font-size:.8em;font-weight:800;color:var(--ochre-2)}
+.tally i{display:inline-block;width:3.2em;height:1.4em;border-bottom:3px solid var(--ochre)}
+.caps2{display:grid;grid-template-columns:1fr 1fr;gap:var(--s8);font-size:.9em;border-top:var(--hair);padding-top:var(--s4);flex:none}
+.caps2 p:last-child{font-weight:700}
+.card svg.dg{margin-top:var(--s3)}
+.def{font-size:1.02em;font-weight:700;line-height:1.38}
+.q-s{font-size:1.05em;margin:var(--s5) 0}
+.stat{border-top:var(--hair);padding-top:var(--s3)}
+.sv{display:flex;align-items:baseline;gap:.3em;font-weight:800;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1}
+.sv span{font-size:1.5em;color:var(--ink-3)} .sv i{font-style:normal;color:var(--ink-4);font-size:1.1em} .sv b{font-size:2.2em;color:var(--accent)}
+.sl{font-size:.74em;color:var(--ink-2);margin-top:.4em;font-weight:600}
+.cav{display:inline-block;margin-left:.4em;padding:.1em .5em;background:var(--ochre-wash);color:var(--ochre-2);border-radius:var(--r-s);font-weight:700}
+
+
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s5);align-items:stretch}
+.pillar{border-top:8px solid var(--tone);border-bottom:var(--rule-ink);background:var(--paper-hi);padding:14px 18px 16px;display:flex;flex-direction:column;gap:6px;font-size:.78em;min-width:0}
+.pillar .pk{font-size:2.2em;font-weight:800;line-height:1;color:var(--tone);letter-spacing:-.03em}
+.pillar h4{margin:0;font-size:1.22em;font-weight:800;letter-spacing:-.02em}
+.pillar .pr{font-weight:800;color:var(--tone-2)}
+.pillar code{font-size:.78em;align-self:flex-start;word-break:break-all}
+.pillar .pa{margin-top:auto;padding-top:8px;border-top:var(--hair);font-weight:600}
+.pillar .pe{color:var(--ink-3);font-size:.9em}
+.pillar.faint{background:transparent;border-top-style:double;border-top-width:8px}
+.pillar.faint .pe{font-style:normal;opacity:.75}
+.anat{display:grid;grid-template-columns:1fr;font-size:.8em;border-top:var(--rule-ink)}
+.anat .af{font:600 .8em/1.6 var(--mono);color:var(--ink-4);padding-left:.3em}
+.anat .ar{display:grid;grid-template-columns:9.2em 1fr;gap:var(--s4);padding:.32em 0;border-bottom:var(--hair);align-items:baseline}
+.anat .ak code{background:none;color:var(--accent-2);font-weight:700;font-size:.92em;padding:0}
+.anat .ab{font-weight:800;color:var(--ink-2)}
+.req{display:inline-block;font-size:14px;font-weight:800;letter-spacing:.08em;color:#fff;background:var(--accent);padding:2px 6px;border-radius:var(--r-s);margin-right:.5em;vertical-align:.15em}
+.ana{margin-top:var(--s3);font-size:.82em;color:var(--ink-2);font-weight:600;padding-left:.8em;border-left:4px solid var(--tone)}
+.c-pr .card{font-size:.74em;display:flex;flex-direction:column;gap:8px}
+.c-pr .card h4{font-size:1.15em}
+.cmp{display:grid;grid-template-columns:auto 1fr;gap:.5em;align-items:baseline;padding:.4em .5em;border-left:4px solid}
+.cmp.no{border-color:var(--accent);background:var(--accent-wash)}
+.cmp.ok{border-color:var(--teal);background:var(--teal-wash)}
+.cmp span{font-weight:800;font-size:.86em}
+.cmp.no span{color:var(--accent-2)} .cmp.ok span{color:var(--teal-2)}
+.cmp code{background:none;padding:0;color:var(--ink);font-size:.86em}
+.cmp p{margin:0}
+.file-box.tree{font-size:.7em;margin:0;padding-top:12px}
+.file-box.tree:after{display:none}
+.tree .fb-title{position:static;white-space:normal;margin-bottom:8px;font-size:.9em}
+.pats{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s5)}
+.pat{border-top:var(--rule-ink);padding-top:10px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.pat .ph-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.pat .pn{font-size:1.1em;font-weight:800;color:var(--tone);font-variant-numeric:tabular-nums}
+.pat b{font-size:1em;font-weight:800;letter-spacing:-.02em}
+.pat small{font-size:.66em;color:var(--ink-3);font-weight:600}
+.pat p{font-size:.8em;color:var(--ink-2);line-height:1.38}
+.pat svg{max-width:300px;align-self:center}
+.comp{flex:none;border-top:var(--hair);padding-top:12px}
+.cases{display:flex;flex-direction:column;gap:var(--s4)}
+.case{border-left:5px solid var(--ochre);padding:.3em 0 .3em .8em;font-size:.76em}
+.case .cl{font-size:14px;font-weight:800;letter-spacing:.12em;color:var(--ochre-2)}
+.case p{font-weight:600;margin:.15em 0}
+.case .ans{font-size:.82em;color:var(--ink-3);font-weight:700;display:flex;align-items:center;gap:.5em}
+.case .ans i{display:inline-block;width:8em;border-bottom:2px solid var(--ink-4);height:1em}
+.gatebox{display:grid;grid-template-columns:1fr auto 1fr;gap:var(--s5);font-size:.8em}
+.gatebox ul>li{margin:.15em 0 .45em}
+.gatebox .good li:before{background:var(--teal)} .gatebox .bad li:before{background:var(--accent)}
+.gate{display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:6px}
+.gate .gl{flex:1;width:0;border-left:2px dashed var(--accent)}
+.gate .gt{font-size:15px;font-weight:800;letter-spacing:.12em;color:var(--accent)}
+.stamp.big{font-size:1.05em}
+.stamped{display:flex;gap:var(--s6);align-items:flex-start}
+.qs{font-size:.8em;display:flex;flex-direction:column;gap:.2em}
+.qs>li{padding:.35em 0 .4em 1.8em;border-top:var(--hair);margin:0}
+.qs>li:before{border-color:var(--ochre);color:var(--ochre-2);top:.4em}
+
+
+.console>.col:first-child{flex:0 0 36%}
+.console.wide-l>.col:first-child{flex:0 0 44%}
+.console>.col:first-child>ul>li{margin:.1em 0 .5em}
+.resbox{border-left:4px solid var(--teal);background:var(--teal-wash);padding:.45em .75em;font-size:var(--fk);line-height:1.4;margin-top:var(--s4)}
+.resbox p{margin:0 0 .25em}
+.stkbox{border-left:4px solid var(--accent);padding:.35em 0 .35em .75em;font-size:var(--fk);line-height:1.4;margin-top:var(--s4)}
+.stkbox li{margin:.1em 0 .3em}
+.stkbox li:before{background:var(--accent)}
+.stkbox .lbl,.resbox .lbl{margin-bottom:4px}
+.console .resbox{font-size:var(--fk)}
+.resbox .lbl{margin-bottom:4px}
+.csteps>ol{counter-reset:c}
+.csteps>ol>li{padding:.1em 0 .5em 2.1em;margin:0 0 .25em;border-bottom:var(--hair)}
+.prac .csteps>ol>li:before{width:1.5em;height:1.5em;line-height:1.36em;font-size:.8em;background:var(--accent);border-color:var(--accent);color:#fff}
+.csteps>ol>li>ul{font-size:.84em;color:var(--ink-2)}
+.csteps>ol>li>ul>li:before{background:var(--ink-4)}
+.csteps>ul{margin-top:var(--s3)}
+.csteps table{margin-top:var(--s3)}
+.csteps>p{font-size:.82em;color:var(--ink-3);margin:var(--s3) 0 var(--s2)}
+.fmap{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--s3)}
+.fmap.c3{grid-template-columns:repeat(3,1fr)}
+.fm{background:var(--paper-hi);border-top:5px solid var(--tone);padding:10px 14px 12px;display:flex;flex-direction:column;gap:3px;min-width:0;font-size:.74em;line-height:1.3}
+.fm.demo{background:transparent;border:1.5px dashed var(--ink-4);border-top:5px solid var(--ink-4)}
+.fm-a{color:var(--ink-3);font-weight:600}
+.fm-n{font-size:1.18em;font-weight:800;letter-spacing:-.02em;color:var(--ink)}
+.fm-x{color:var(--ink-2)}
+.fm-x:before{content:"예  ";font-size:.8em;font-weight:800;color:var(--ink-4)}
+.fm-p{margin-top:auto;align-self:flex-start;font-size:15px;font-weight:800;letter-spacing:.04em;padding:3px 8px;border-radius:var(--r-s)}
+.fm-p.spark{color:var(--teal-2);box-shadow:inset 0 0 0 1.5px var(--teal)}
+.fm-p.blaze{background:var(--accent);color:#fff}
+.fm-p.none{color:var(--ink-3);box-shadow:inset 0 0 0 1.5px var(--ink-4)}
+.fmleg{display:flex;gap:var(--s6);margin-top:var(--s4);font-size:.66em;font-weight:700;color:var(--ink-2)}
+.fmleg span{display:flex;align-items:center;gap:8px}
+.fmleg span:before{content:"";width:26px;height:16px;border-top:5px solid var(--tone);background:var(--paper-hi)}
+.fmleg .demo:before{border:1.5px dashed var(--ink-4);border-top:5px solid var(--ink-4);background:none}
+.con51{gap:var(--s4)}
+.con51>.vis{flex:none}
+.con51 .row2{flex:1;min-height:0;display:flex;gap:var(--s7)}
+.con51 .row2>.col:first-child{flex:0 0 46%}
+.con51 .row2>.col{flex:1}
+.con51 .row2>.col:first-child>ul>li{margin:.05em 0 .35em}
+.cards.use{flex:none}
+.ckcs{align-items:stretch}.ckc{display:flex;gap:.7em;align-items:flex-start;background:var(--paper-hi);padding:var(--s4);font-size:1.05em;line-height:1.4}.ckc .box{flex:none;margin-top:.15em}.ckc p{margin:0}
+.use .card p,.cards.c3 .card p{font-size:.92em}
+.card.mute .ey{color:var(--ink-3)}
+.uk{display:grid;grid-template-columns:4.6em 1fr;gap:.2em .6em;margin-top:var(--s4);padding-top:var(--s3);border-top:var(--hair);font-size:.86em}
+.uk span{font-size:15px;font-weight:800;letter-spacing:.06em;padding:4px 0;color:var(--teal-2)}
+.uk.nouse span{color:var(--ink-3)}
+.uk p{grid-column:2;margin:0 0 .2em}
+.uk.nouse p{color:var(--ink-3)}
+.verdict{margin-top:var(--s4);font-size:.82em}
+.vr{display:flex;align-items:center;justify-content:space-between;gap:var(--s4);padding:.32em 0;border-bottom:var(--hair)}
+.vr b{flex:none;font-size:.9em;padding:.12em .7em;border-radius:99px;color:#fff}
+.vr b.ok{background:var(--teal)} .vr b.no{background:var(--accent)}
+.plans{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4);margin-bottom:var(--s4);margin-left:28%}
+.pl{padding:10px 14px;border-top:5px solid;display:flex;flex-direction:column;gap:2px;font-size:.8em;line-height:1.25}
+.pl b{font-size:1.2em;font-weight:800}
+.pl small{font-size:.78em;color:var(--ink-3);font-weight:600}
+.pl.spark{border-color:var(--teal);background:var(--teal-wash)} .pl.blaze{border-color:var(--accent);background:var(--accent-wash)}
+.ptbl table{font-size:.8em;table-layout:fixed}
+.ptbl th:first-child,.ptbl td:first-child{width:28%}
+.ptbl td.na{color:var(--ink-4);font-weight:600}
+.qgrid{display:flex;flex-direction:column;gap:var(--s4)}
+.qc{border-left:5px solid var(--ochre);padding:.2em 0 .3em .8em}
+.qq{font-size:1.05em;font-weight:800;letter-spacing:-.02em}
+.qo{display:flex;gap:var(--s5);font-size:.74em;color:var(--ink-2);margin-top:.2em;font-weight:600}
+.qo span{display:flex;align-items:center}
+.blanks{display:flex;flex-direction:column;gap:var(--s4);position:relative;padding:12px 16px 12px 0}
+.bl{display:flex;align-items:flex-end;gap:var(--s4);font-size:1.1em}
+.bl b{color:var(--ochre-2)}
+.bl i{flex:1;border-bottom:2.5px solid var(--ink-4);height:1.2em}
+.blanks .stamp{align-self:flex-end;margin-top:var(--s3)}
+.sits{display:flex;flex-direction:column;gap:var(--s2);font-size:.78em;margin-top:var(--s4)}
+.sits>li{padding:.25em 0 .35em 1.7em;border-top:var(--hair);margin:0}
+.sits>li:before{border-color:var(--accent);color:var(--accent-2);top:.35em}
+.sits .sa{font-size:.78em;color:var(--ink-3);font-weight:700;display:flex;gap:.5em;align-items:center}
+.sits .sa i{display:inline-block;width:6em;border-bottom:2px solid var(--ink-4);height:1em}
+.chkt td:first-child{font-weight:500}
+.chkt td{white-space:normal}
+.chkt .box{width:.9em;min-width:.9em;height:.9em;border-width:2px}
+.info{font-size:.78em;color:var(--ink-2);border-left:4px solid var(--ink-3);padding:.3em .8em;background:var(--paper-2)}
+.capt{font-size:.8em;color:var(--ink-2);margin-top:var(--s3);border-top:var(--hair);padding-top:var(--s3)}
+.ws{display:flex;flex-direction:column;font-size:.78em}
+.ws>li{display:flex;flex-direction:column;padding:.22em 0 .28em 1.7em;margin:0;border-top:var(--hair)}
+.ws>li i{display:block;height:.9em;border-bottom:1.5px dashed var(--ink-4);margin-top:.15em}
+.ws>li:before{top:.3em}
+.me{display:flex;flex-direction:column;align-items:center;gap:10px;font-size:.8em;color:var(--accent-2)}
+.stamped .checks{flex:1;font-size:.8em}
+.recap{border:var(--rule-ink);border-width:2px;padding:0;display:flex;flex-direction:column;font-size:.86em;background:var(--paper-hi)}
+.rc{padding:14px 18px;border-top:var(--hair)}
+.rc:first-child{border-top:0}
+.r7{display:flex;flex-wrap:wrap;gap:6px 8px}
+.r7>li{display:inline-flex;align-items:center;gap:.4em;padding:.15em .6em .15em .35em;margin:0;border:1.5px solid var(--tone);border-radius:var(--r-s);font-size:.84em;font-weight:700}
+.r7>li:before{position:static;width:1.3em;height:1.3em;line-height:1.1em;font-size:.7em;flex:none}
+.rt{font-size:.82em;line-height:1.4;color:var(--ink-2)}
+.rcg{display:grid;grid-template-columns:1.1fr 1fr 1fr;border:2px solid var(--ink);background:var(--paper-hi);font-size:.8em}
+.rcg .rc{border-top:0;border-left:var(--hair)}.rcg .rc:first-child{border-left:0}
+.rcl{display:flex;flex-direction:column;gap:2px;margin:0;padding:0;list-style:none;font-size:.9em}.rcl li{margin:0;padding:0;display:flex;align-items:center}.rcl li:before{display:none}
+.rcs{display:flex;gap:var(--s5);align-items:center;flex-wrap:wrap;margin:var(--s3) 0;font-size:.78em;border:var(--hair);padding:.4em .8em;background:var(--paper-2)}
+.rcs .pi{display:inline-flex;align-items:center;font-weight:600}
+table.dz{width:100%;border-collapse:collapse;font-size:.74em;margin-bottom:var(--s2)}
+table.dz th,table.dz td{border-top:var(--hair);padding:.25em .6em;text-align:left;vertical-align:top;line-height:1.3}
+table.dz thead th{font-size:.8em;color:var(--ink-3)}table.dz tbody th{white-space:nowrap;color:var(--tone-2);width:1%}
+.ln1{height:1.4em;border-bottom:2.5px solid var(--ink-4)}
+.six{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3) var(--s7)}
+.sx{display:flex;gap:.6em;align-items:flex-start;padding:.5em 0;border-top:var(--hair);font-size:.92em;font-weight:600}
+.sx .box{flex:none;width:1.05em;height:1.05em;margin-top:.15em}
+.foot{font-size:.7em;color:var(--ink-3);margin-top:var(--s4)}
+.g2{grid-template-columns:1fr 1fr;gap:var(--s5) var(--s7)}
+.anti h4,.faq h4{font-size:1.05em}
+.anti p,.faq p{font-size:.92em;color:var(--ink-2)}
+.rx{display:inline-block;font-size:14px;font-weight:800;letter-spacing:.1em;color:var(--teal-2);margin-right:.6em;vertical-align:.12em}
+.faq .ey{color:var(--ink-3)}
+.faq.fb{border-top-color:var(--teal)} .faq.fb .ey{color:var(--teal)}
+.faq .sm{font-size:.74em;color:var(--teal-2);font-weight:700;margin-top:.3em}
+.refs{display:flex;flex-direction:column}
+.refs>li{display:grid;grid-template-columns:5.2em 1fr;gap:.6em;padding:.45em 0;margin:0;border-top:var(--hair);font-size:.92em}
+.refs>li:first-child{border-top:var(--rule-ink)}
+.refs>li:before{display:none}
+.refs .rk{font-size:15px;font-weight:800;letter-spacing:.06em;color:var(--tone-2);padding-top:.35em}
+.nextc{border-top:5px solid var(--accent);background:var(--paper-hi);padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.nextc .ey{font-size:15px;font-weight:800;letter-spacing:.1em;color:var(--accent)}
+.nextc p{font-size:1.05em;font-weight:700}
+.qr .ph{width:100%;justify-content:center;min-height:120px}
+
+/* ---------- 표지·휴식(대담한 한 곳) ---------- */
+.slide.cover,.slide.brk{background:var(--night);color:var(--on-night)}
+.slide.cover .hd,.slide.brk .hd{color:var(--on-night-2)}
+.slide.cover .ft,.slide.brk .ft{border-top-color:var(--night-rule);color:var(--on-night-2)}
+.slide.cover .ft-num b,.slide.brk .ft-num b{color:var(--on-night)}
+.slide.cover .ft-bar i,.slide.brk .ft-bar i{background:var(--night-rule)}
+.slide.cover .title,.slide.cover .hd{display:none}
+.slide.cover strong,.slide.brk strong{color:var(--on-night);background:none}
+.cv{flex:1;display:grid;grid-template-columns:1fr 330px;gap:var(--s6);padding:24px 0 26px;min-height:0}
+.cv-l{display:flex;flex-direction:column;min-width:0}
+.cv-k{font-size:16px;font-weight:800;letter-spacing:.2em;color:#f0a58c;display:flex;align-items:center;gap:12px}
+.cv-k:before{content:"";width:44px;height:3px;background:var(--accent)}
+.cv-t{font-size:var(--t-cover);line-height:1.06;font-weight:800;letter-spacing:-.045em;margin:26px 0 0;color:#fbf3e2}
+.cv-t span{color:#f0a58c}
+.cv-s{font-size:26px;color:var(--on-night-2);margin-top:22px;font-weight:500}
+.cv-by{margin:30px 0 0;font-size:var(--t-small);font-weight:600;color:#fbf3e2;display:flex;align-items:baseline;gap:14px}
+.cv-by span{font-size:var(--t-label);letter-spacing:.2em;color:#f0a58c;font-weight:800}
+.cv-g{margin-top:auto}
+.cv-g .lbl{color:var(--on-night-2)}
+.cv-g ol{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--night-rule)}
+.cv-g li{padding:16px 22px 0 0;margin:0;display:flex;gap:14px;align-items:flex-start;font-size:24px;font-weight:700;line-height:1.3;color:#fbf3e2}
+.cv-g li+li{padding-left:22px;border-left:1px solid var(--night-rule)}
+.cv-g li:before{display:none}
+.cv-g svg{flex:none;width:40px;height:40px}
+.cv-g .gn{display:block;font-size:14px;letter-spacing:.14em;color:#f0a58c;margin-bottom:4px}
+.cv-r{display:flex;align-items:center;justify-content:center}
+.brkb{flex:1;display:grid;grid-template-columns:auto 1fr;gap:var(--s8);align-items:center;margin-bottom:var(--s5)}
+.tcol{display:flex;flex-direction:column;gap:var(--s6);align-items:flex-start}
+.timer{display:flex;font:800 190px/1 var(--font);color:#f0a58c;white-space:nowrap}
+.timer .c{display:inline-block;width:.74em;text-align:center}
+.timer .c.s{width:.32em}
+.timer.paused{opacity:.55}
+.timer.done{color:#fff;animation:tmb 1s steps(1,end) infinite}
+@keyframes tmb{50%{opacity:.3}}
+.tctl{display:flex;gap:var(--s4)}
+.tbtn{font:700 30px/1 var(--font);color:var(--on-night);background:var(--night-2);border:2px solid var(--night-rule);border-radius:999px;padding:.55em 1.3em;cursor:pointer}
+.tbtn:hover:not(:disabled){border-color:var(--accent);color:#fff}
+.tbtn:disabled{opacity:.4;cursor:default}
+.brkb ul>li{font-size:30px;margin:.2em 0 .6em;color:var(--on-night)}
+.brkb ul>li:before{background:var(--accent)}
+.slide.brk .title{color:#fbf3e2}
+.brkb code{background:var(--night-2);color:#f0c9b8}
+.map .prep{flex:none;display:flex;gap:28px;align-items:center;font-size:.8em;border-top:var(--hair);padding-top:12px}
+.map .prep .lbl{margin:0}
+.pi{display:flex;align-items:center}
+.map .lead p{font-size:1.15em;font-weight:800;letter-spacing:-.02em}
+.thanks{font-size:1.2em;font-weight:800;color:var(--accent)}
+
+/* ---------- 오버레이: 발표자 노트 · 목차 ---------- */
+#notes{position:fixed;left:0;right:0;bottom:0;max-height:44vh;overflow:auto;background:rgba(28,23,15,.97);color:#efe5cf;padding:16px 32px 22px;
+  font-size:17px;line-height:1.65;display:none;z-index:50;border-top:3px solid var(--accent);font-family:var(--font)}
+#notes.show{display:block}
+#notes code{background:#3b3126;color:#f1c8b8;font-size:.9em}
+#notes .nmeta{font-size:13px;font-weight:800;letter-spacing:.12em;color:#f0a58c;margin-bottom:8px}
+#notes p{margin:.25em 0}
+#notes .nx{margin-top:12px;padding:10px 14px;background:#2f271b;border-left:3px solid var(--ochre);border-radius:var(--r-s)}
+#notes .nx b{color:#f0c987}
+#notes .chk{background:#c99a3f;color:#2a2314;box-shadow:none}
+#notes .chk:before{border-color:#2a2314}
+#notes ul,#notes ol{padding-left:1.2em;list-style:disc}#notes li{padding-left:0}#notes li:before{display:none}
+#notes ol{list-style:decimal}
+#notes strong{color:#fff;background:none}
+#notes pre{font-size:.9em;background:#17120c;padding:8px;border-radius:6px}
+#notes table{font-size:.9em}#notes th{color:#efe5cf;border-color:#6f5f42}#notes td{border-color:#4a3f2c}
+#notes .prompt-box,#notes .file-box,#notes .terminal,#notes .code-block{font-size:.9em;padding-top:12px}
+#notes .prompt-box:before,#notes .prompt-box:after,#notes .terminal:before,#notes .terminal:after,#notes .file-box:after,#notes .code-block:before,#notes .code-block:after{display:none}
+#notes .copy{display:none}
+#grid{position:fixed;inset:0;background:rgba(23,19,13,.97);z-index:60;overflow:auto;padding:28px 36px;display:none;font-family:var(--font)}
+#grid.show{display:block}
+#grid .gh{color:#efe5cf;font-size:15px;font-weight:800;letter-spacing:.14em;margin-bottom:18px}
+#grid .gm{color:#b3a483;font-size:13px;font-weight:800;letter-spacing:.12em;margin:18px 0 8px;display:flex;gap:10px;align-items:center}
+#grid .gm b{color:#fff;padding:3px 7px;border-radius:3px;background:var(--tone)}
+#grid .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.tile{background:var(--paper);border-radius:var(--r-s);padding:9px 12px 10px;cursor:pointer;border-top:4px solid var(--tone);font-size:14px;line-height:1.35;min-height:72px;color:var(--ink)}
+.tile:hover{background:var(--paper-hi)}
+.tile.cur{outline:3px solid var(--accent);outline-offset:1px}
+.tile small{display:flex;gap:8px;color:var(--ink-3);font-weight:700;font-size:12px;letter-spacing:.04em;margin-bottom:3px;font-variant-numeric:tabular-nums}
+.tile[data-kind="실습"] small i{color:var(--accent)}
+.tile i{font-style:normal}
+.tile code{font-size:.85em}
+#help{position:fixed;left:50%;transform:translateX(-50%);bottom:6px;z-index:40;color:#efe5cf;background:rgba(23,19,13,.8);padding:4px 14px;border-radius:4px;font:12px var(--font);letter-spacing:.04em;transition:opacity 1s}
+#help.off{opacity:0}
+@page{size:1280px 720px;margin:0}
+@media print{
+  html,body{overflow:visible;height:auto;background:#fff}
+  #viewport{position:static;display:block}
+  #stage{transform:none!important;width:auto;height:auto;box-shadow:none;overflow:visible}
+  .slide{position:relative;visibility:visible;opacity:1;width:1280px;height:720px;page-break-after:always;break-after:page;overflow:hidden;transition:none}
+  #notes,#grid,#help,.copy{display:none!important}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+</style></head><body><svg id="svgdefs" aria-hidden="true" focusable="false"><defs><marker id="ah-ink" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker><marker id="ah-acc" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker><marker id="ah-teal" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker><marker id="ah-mute" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker><marker id="ah-blue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker><marker id="ah-ochre" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker><marker id="ah-paper" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="9" markerHeight="9" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker></defs></svg><div id="viewport"><div id="stage"><section class="slide k-정리 cover" id="s1" data-n="1" data-kind="정리" data-min="1" data-module="M1" data-track="t1" data-fsmax="32"><header class="hd"><span class="hd-mod"><b>개요</b>하네스 · Firebase</span><span class="hd-meta"><span class="kind k-정리">정리</span></span></header><h2 class="title">Claude Code 하네스와 Firebase</h2><div class="cv"><div class="cv-l"><div class="cv-k">교원 연수</div><h1 class="cv-t">Claude Code 하네스와<br><span>Firebase 기능 지도</span></h1><p class="cv-s">하네스로 팀을 만들어 고치고, Firebase 기능을 골라 설정한다 (약 66분)</p><p class="cv-by"><span>제작</span>대구과학고등학교 교사 이준구</p><div class="cv-g"><div class="lbl ">시작 전 준비 + 가져갈 것 3개</div><ol><li><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 9h12l4 5h18v20H3z" fill="none" stroke="#f0a58c" stroke-width="2.2" stroke-linejoin="round"/></svg><div><span class="gn">①</span>하네스로 만든 팀 파일을 읽고, 말로 고쳐 다시 실행해 보는 경험</div></li><li><svg viewBox="0 0 40 40" aria-hidden="true"><rect x="4" y="5" width="32" height="30" fill="none" stroke="#f0a58c" stroke-width="2.2"/><path d="M4 15h32M15 15v20M20 24h11" fill="none" stroke="#f0a58c" stroke-width="2.2"/></svg><div><span class="gn">②</span>Firebase 6개 기능을 언제 쓰는지 고르는 기준</div></li><li><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M3 9l11-4 12 4 11-4v26l-11 4-12-4-11 4z M14 5v26 M26 9v26" fill="none" stroke="#f0a58c" stroke-width="2.2" stroke-linejoin="round"/></svg><div><span class="gn">③</span>콘솔에서 인증과 데이터베이스를 직접 설정한 내 테스트 프로젝트</div></li></ol></div></div><div class="cv-r"><svg class="dg " viewBox="0 0 330 420" role="img" aria-label="모델을 둘러싼 하네스 고리 장식"><circle cx="165" cy="210" r="150" fill="none" stroke="#efe5cf" stroke-opacity="0.22" stroke-width="1.5"/><circle cx="165" cy="210" r="112" fill="none" stroke="#efe5cf" stroke-opacity="0.35" stroke-width="1.5"/><circle cx="165" cy="210" r="74" fill="none" stroke="#efe5cf" stroke-opacity="0.55" stroke-width="1.5"/><circle cx="165" cy="210" r="34" fill="#b0402c"/><circle cx="203.3" cy="104.8" r="9" fill="#231d14" stroke="#f0a58c" stroke-width="2.5"/><circle cx="270.2" cy="248.3" r="9" fill="#231d14" stroke="#f0a58c" stroke-width="2.5"/><circle cx="126.7" cy="315.2" r="9" fill="#231d14" stroke="#f0a58c" stroke-width="2.5"/><circle cx="59.8" cy="171.7" r="9" fill="#231d14" stroke="#f0a58c" stroke-width="2.5"/><circle cx="240.0" cy="80.1" r="5" fill="#efe5cf" fill-opacity=".6"/><circle cx="240.0" cy="339.9" r="5" fill="#efe5cf" fill-opacity=".6"/><circle cx="15.0" cy="210.0" r="5" fill="#efe5cf" fill-opacity=".6"/></svg></div></div><footer class="ft"><span class="ft-tr">하네스 · Firebase</span><span class="ft-bar"><i class="cur" style="flex:6"><b style="width:100.0%"></b></i><i class="fut" style="flex:7"><b style="width:0.0%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>1</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 1 · 개요 · 소요 1분</div><p>이 덱은 전체 연수에서 하네스(revfactory/harness)와 Firebase 부분만 따로 뗀 것이다. 앞부분(Claude Code 설치·첫 대화, 프롬프트, CLAUDE.md·스킬)은 이미 알고 있다고 전제한다. 시작 전 확인: ① Claude Code가 설치되어 로그인되어 있다(Pro·Max·Team·Enterprise 또는 Console 계정) ② Firebase 실습용 개인 구글 계정(학교 관리 계정은 프로젝트 생성이 막힐 수 있음) ③ 실제 학생 이름·계정은 쓰지 않는다. M1·M2(하네스)는 39분, M3(Firebase)는 27분이다. 두 부분은 서로 독립이라 하나만 써도 된다. (1분)</p></div></section><section class="slide k-개념 opener" id="s2" data-n="2" data-kind="개념" data-min="2" data-module="M1" data-track="t2" data-fsmax="30"><aside class="rail"><div class="rlab">모듈</div><div class="rbig"><span class="rk">M</span><span class="rn">1</span></div><div class="rname">하네스 입문</div><dl><dt>시간</dt><dd>21분</dd><dt>슬라이드</dt><dd>2–7</dd></dl><div class="rg"><div class="lbl ">학습 목표</div><p>하네스(revfactory/harness) 플러그인을 설치하고, 말로 요청해 '만드는 쪽 + 검수하는 쪽' 팀을 만들어 실행할 수 있다.</p></div></aside><header class="hd"><span class="hd-mod"><b>M1</b>하네스 입문</span><span class="hd-meta"><span class="kind k-개념">개념</span></span></header><h2 class="title">하네스가 해 주는 일</h2><div class="body stack ovc"><div class="lead ovc"><ul><li>혼자 맡기면: 자기 실수를 스스로 알아채기 어렵고, 모호한 요청을 스스로 해석해 끝까지 실행해 버린다</li><li>하네스 = 모델 바깥에서 도구·지침·검증·제어 흐름을 구성한 실행 환경</li><li><code>revfactory/harness</code> = 말로 요청하면 역할이 나뉜 팀 파일을 만들어 주는 플러그인</li><li>오늘 얻을 것: ① 플러그인 설치 ② 말로 팀 만들기 ③ 팀을 실행하고 검수 결과 보기</li></ul></div><div class="vis ovc"><svg class="dg " viewBox="0 0 1152 250" role="img" aria-label="말로 요청하면 하네스가 팀 파일을 만들고, 만드는 쪽과 검수하는 쪽이 실행한다"><text x="165" y="16" font-size="22" text-anchor="middle" dominant-baseline="central" class="t2 b">① 말로 요청</text><text x="576" y="16" font-size="22" text-anchor="middle" dominant-baseline="central" class="t2 b">② 하네스가 팀 파일 생성</text><text x="987" y="16" font-size="22" text-anchor="middle" dominant-baseline="central" class="t2 b">③ 팀 실행 · 검수</text><rect x="0" y="44" width="330" height="150" rx="14" class="naw"/><path d="M44 194 l-18 30 l46 -30 z" class="naw"/><text x="165" y="87.95" font-size="23" text-anchor="middle" dominant-baseline="central" class="ta b">“형성평가 문항을 만들고</text><text x="165" y="119" font-size="23" text-anchor="middle" dominant-baseline="central" class="ta b">검수하는 하네스를</text><text x="165" y="150.05" font-size="23" text-anchor="middle" dominant-baseline="central" class="ta b">구성해줘”</text><rect x="411" y="44" width="330" height="150" rx="10" class="nteal"/><path class="ln tone" d="M529.2 82.8 h33.8 l10.4 13 h49.4 v59.8 h-93.6 z" style="stroke-linejoin:round"/><text x="576" y="168" font-size="26" text-anchor="middle" dominant-baseline="central" class="mono b tteal">.claude/</text><rect x="822" y="44" width="330" height="62" rx="6" class="n"/><text x="987" y="75" font-size="24" text-anchor="middle" dominant-baseline="central" class="b">만드는 쪽</text><rect x="822" y="132" width="330" height="62" rx="6" class="nt"/><text x="987" y="163" font-size="24" text-anchor="middle" dominant-baseline="central" class="tt b">검수하는 쪽</text><path d="M987 108 L987 130" class="ln" marker-end="url(#ah-ink)"/><path d="M338 119 L403 119" class="ln acc thick" marker-end="url(#ah-acc)"/><path d="M749 119 L814 119" class="ln acc thick" marker-end="url(#ah-acc)"/></svg></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="cur" style="flex:6"><b style="width:16.7%"></b></i><i class="fut" style="flex:7"><b style="width:0.0%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>2</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 2 · M1 하네스 입문 · 소요 2분</div><p>Claude Code 기본 사용법을 안다는 전제에서 시작한다고 전환한다. 혼자 맡기면 생기는 문제는 한 줄만 말한다. 코드를 쓴 바로 그 에이전트가 검토하면 놓친 부분을 또 놓치기 쉽고, "정리해줘" 같은 모호한 요청을 스스로 해석해 필요한 데이터까지 지우는 사고가 보고된 바 있다(원본 표현). 하네스 정의는 《하네스 엔지니어링 with 클로드 코드》(황민호, 한빛미디어) 인용이다: "모델의 가중치를 건드리지 않고, 모델 바깥에 권한·도구·검증·관측을 설계해 에이전트가 홀로 움직이게 만드는 환경." 하네스는 새 AI 모델이 아니라 기존 모델이 동작하는 조건(도구·지침·검증·제어 흐름)을 바꾸는 환경이다. 저자 주장 "모델이 아니라 하네스가 결과를 결정한다"와 평균 점수 49.5 → 79.3은 저자가 직접 한 소프트웨어 엔지니어링 과제 15개 실험이고 관련 저장소 README에도 제3자 재현 검증이 아직 없다고 적혀 있다. 방향성만 참고하고 개선폭은 하나의 사례로 말한다(단서 배지: 저자 자체 실험, 재현 검증 전). 이 연수는 하네스의 원리를 설계하는 시간이 아니라 <code>revfactory/harness</code>를 써서 팀 파일을 만들게 하고 고치는 시간이라고 분명히 안내한다. 구성 요소 이름(에이전트·스킬·오케스트레이터)은 슬라이드 7에서 한 줄씩만 정리한다. (2분)</p><div class="nx"><b>도식 설명(강사용)</b> 가로 3칸 화살표 "말로 요청 → 하네스가 팀 파일 생성 → 팀 실행·검수". 칸 1에 말풍선 한 줄(예: "형성평가 문항을 만들고 검수하는 하네스를 구성해줘"), 칸 2에 <code>.claude/</code> 폴더 아이콘, 칸 3에 "만드는 쪽 / 검수하는 쪽" 두 상자. 아래에 작은 단서 배지 "수치 49.5 → 79.3: 저자 자체 실험, 재현 검증 전"은 노트에만 두고 슬라이드에는 넣지 않는다.</div></div></section>
+
+<section class="slide k-실습" id="s3" data-n="3" data-kind="실습" data-min="2" data-module="M1" data-track="t2" data-fsmax="32"><header class="hd"><span class="hd-mod"><b>M1</b>하네스 입문</span><span class="hd-meta"><span class="kind k-실습">실습</span></span></header><h2 class="title">실습: 플러그인 설치 전 준비 (새 폴더에서 시작)</h2><div class="body prac ovc"><div class="col steps ovc"><div class="lbl l-step">단계</div><ol class="tl"><li><span class="sn">1</span><div class="st">새 폴더 <code>mini-harness</code>에서 Claude Code를 연다</div></li><li><span class="sn">2</span><div class="st">이 연수의 플러그인은 별도 설정(실험 플래그 등) 없이 바로 쓸 수 있다</div></li><li><span class="sn">3</span><div class="st">확인: 폴더 이름과 <code>claude</code> 실행 상태만 점검하고 다음 슬라이드로</div></li></ol><div class="resbox mov"><div class="lbl l-res">예상 결과</div><p>Claude Code 입력창이 열리고, 현재 폴더가 <code>mini-harness</code>로 보인다.</p></div><div class="stkbox mov"><div class="lbl l-stk">막힐 때</div><ul><li><code>mkdir</code>가 안 되거나 폴더 위치를 모르겠다 → 원하는 위치에 만들어도 된다. 이미 <code>mini-harness</code>가 있으면 그 폴더로 <code>cd</code>만 한다.</li></ul></div></div><div class="col main ovc"><div class="grp"><p>터미널에서:</p><div class="prompt-box"><button class="copy" type="button">복사</button><pre><code>mkdir mini-harness &amp;&amp; cd mini-harness
+claude</code></pre></div></div></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="cur" style="flex:6"><b style="width:33.3%"></b></i><i class="fut" style="flex:7"><b style="width:0.0%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>3</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 3 · M1 하네스 입문 · 소요 2분</div><p><code>revfactory/harness</code> v2는 실험 플래그가 필요 없고, 플래그를 켜 두면 슬라이드 6의 quiz-writer/quiz-checker가 서브에이전트가 아니라 팀원(teammate)으로 실행되어 예시 화면과 달라질 수 있다. 그래서 이 연수에서는 어떤 플래그도 켜지 않는다. 강사용 한 줄: "에이전트 팀"은 별도의 실험 기능이며(플래그 이름 <code>CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS</code>는 확인됨) 오늘은 사용하지 않는다. 대화형 세션에서만 동작하고 헤드리스(<code>-p</code>)에서는 팀원이 생성되지 않는다. 막힌 참가자는 짝 화면을 함께 보게 한다. (2분)</p><div class="nx"><b>도식 설명(강사용)</b> 2단계 <code>.flow</code> (폴더 만들기 → <code>claude</code> 실행 확인). 오른쪽에 작은 체크박스 "설정 파일 만지지 않기".</div><div class="nx"><b>막힐 때</b><ul><li><code>mkdir</code>가 안 되거나 폴더 위치를 모르겠다 → 원하는 위치에 만들어도 된다. 이미 <code>mini-harness</code>가 있으면 그 폴더로 <code>cd</code>만 한다.</li></ul></div></div></section>
+
+<section class="slide k-실습" id="s4" data-n="4" data-kind="실습" data-min="5" data-module="M1" data-track="t2" data-fsmax="32"><header class="hd"><span class="hd-mod"><b>M1</b>하네스 입문</span><span class="hd-meta"><span class="kind k-실습">실습</span></span></header><h2 class="title">실습: 플러그인 설치 (설치 통로 열고 설치하기)</h2><div class="body prac ovc"><div class="col steps ovc"><div class="lbl l-step">단계</div><ol class="tl"><li><span class="sn">1</span><div class="st">저장소를 "마켓플레이스"로 등록한다</div></li><li><span class="sn">2</span><div class="st">그 안의 <code>harness</code>를 설치한다</div></li><li><span class="sn">3</span><div class="st"><code>/plugin</code>에서 <code>harness</code>가 enabled면 성공</div></li><li><span class="sn">4</span><div class="st">주의: 커뮤니티가 만든 서드파티. 학교 관리 PC는 담당 부서와 먼저 상의</div></li></ol><div class="resbox mov"><div class="lbl l-res">예상 결과</div><p><code>/plugin</code> 패널 목록에 <code>harness</code>가 보이고 활성화(enabled) 상태.</p></div><div class="stkbox mov"><div class="lbl l-stk">막힐 때</div><ul><li>설치 명령이 인식되지 않는다 → 마켓플레이스 이름이 다를 수 있다. <code>/plugin</code> 패널에서 등록된 마켓플레이스 이름을 보고 <code>harness@&lt;그 이름&gt;</code>으로 바꾼다.</li><li>학교 PC라서 설치가 막힌다 → 짝 화면을 함께 본다.</li><li><code>/plugin install</code>을 입력했더니 바로 설치되지 않고 패널이 열린다 → 정상이다. 패널에서 설치 범위를 고르고 설치한다.</li></ul></div></div><div class="col main ovc"><div class="grp"><p>Claude Code 입력창에서:</p><div class="prompt-box"><button class="copy" type="button">복사</button><pre><code>/plugin marketplace add revfactory/harness
+/plugin install harness@harness-marketplace</code></pre></div><p>확인: <code>/plugin</code></p></div></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="cur" style="flex:6"><b style="width:50.0%"></b></i><i class="fut" style="flex:7"><b style="width:0.0%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>4</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 4 · M1 하네스 입문 · 소요 5분</div><p>세션 안에서 <code>/plugin install</code>을 입력하면 설치 범위를 고르는 패널이 열린다(이 패널을 따라가는 시간 때문에 5분). 플러그인 저장소를 "마켓플레이스"로 등록하는 것이 첫 줄, 그 안의 플러그인을 설치하는 것이 둘째 줄이다. 마켓플레이스는 플러그인 카탈로그 저장소이므로, 저장소를 먼저 등록하고 그 안의 플러그인을 설치한다. <code>revfactory/harness</code>는 Anthropic이 아니라 개인 개발자가 공개한 오픈소스이고, 플러그인 안의 스킬 문구는 Claude Code가 내 권한으로 실행하므로 낯선 저장소는 설치 전에 코드를 훑어보는 습관이 안전하다. 학교 공용 계정이나 관리 PC에서는 설치 전에 담당 부서와 상의한다(원본 문장 유지). 마켓플레이스 이름 <code>harness-marketplace</code>와 두 줄 설치 명령은 검수에서 저장소 기준으로 확인됨. (5분)</p><div class="nx"><b>도식 설명(강사용)</b> 2줄 명령 + 아래에 <code>/plugin</code> 패널 캡처 자리 표시("harness: enabled").</div><div class="nx"><b>막힐 때</b><ul><li>설치 명령이 인식되지 않는다 → 마켓플레이스 이름이 다를 수 있다. <code>/plugin</code> 패널에서 등록된 마켓플레이스 이름을 보고 <code>harness@&lt;그 이름&gt;</code>으로 바꾼다.</li><li>학교 PC라서 설치가 막힌다 → 짝 화면을 함께 본다.</li><li><code>/plugin install</code>을 입력했더니 바로 설치되지 않고 패널이 열린다 → 정상이다. 패널에서 설치 범위를 고르고 설치한다.</li></ul></div></div></section>
+
+<section class="slide k-실습" id="s5" data-n="5" data-kind="실습" data-min="5" data-module="M1" data-track="t2" data-fsmax="32"><header class="hd"><span class="hd-mod"><b>M1</b>하네스 입문</span><span class="hd-meta"><span class="kind k-실습">실습</span></span></header><h2 class="title">실습: 말로 팀 만들기 (플랜 모드)</h2><div class="body prac ovc"><div class="col steps ovc"><div class="lbl l-step">단계</div><ol class="tl"><li><span class="sn">1</span><div class="st">플랜 모드로 어떤 파일이 만들어질지 먼저 확인: Shift+Tab을 눌러 <code>⏸ plan mode on</code>이 보이게 한다(Auto로 시작했다면 세 번). 또는 프롬프트 앞에 <code>/plan</code></div></li><li><span class="sn">2</span><div class="st">계획이 나오면 선택지에서 <strong>"Yes, manually approve edits"</strong> 를 고른다 ("Yes, and use auto mode"는 고르지 않는다)</div></li><li><span class="sn">3</span><div class="st">하고 싶은 말을 그냥 문장으로 설명한다</div></li><li><span class="sn">4</span><div class="st">만드는 에이전트 1 + 검수 에이전트 1 (검수는 읽기만)</div></li></ol><div class="resbox mov"><div class="lbl l-res">예상 결과</div><p>아래와 비슷한 파일 구조(실행마다 파일 이름과 문구가 조금씩 다르다. 예시 중 하나).</p></div><div class="stkbox mov"><div class="lbl l-stk">막힐 때</div><ul><li>플러그인이 반응하지 않고 일반 답변만 한다 → 문장 맨 앞이 "하네스를 구성해줘"로 읽히도록 위 문장을 그대로 붙여 넣는다.</li><li>파일 이름이 나와 다르다 → 정상이다. 에이전트 2개와 스킬 1개가 있으면 된다.</li><li>계획 승인 화면의 선택지가 다르게 보인다 → 최신 버전은 "Yes, and use auto mode / Yes, manually approve edits / No, keep planning" 세 가지다. 두 번째를 고른다.</li></ul></div></div><div class="col main ovc"><div class="grp"><div class="prompt-box"><button class="copy" type="button">복사</button><pre><code>형성평가 문항을 만들고 검수하는 하네스를 구성해줘. 주제를 입력하면
+객관식 퀴즈를 생성하는 에이전트 하나와, 생성된 문항의 정답·오탈자만
+검수하는 에이전트 하나로 구성해줘. 검수 에이전트는 파일을 수정하지
+않고 읽기만 하게 해줘</code></pre></div></div><div class="grp resshort"><div class="lbl l-res">예상 결과 · 화면</div><div class="file-box"><div class="fb-title">생성된 폴더 구조 (예시)</div><button class="copy" type="button">복사</button><pre><code>mini-harness/
+└── .claude/
+    ├── agents/
+    │   ├── quiz-writer.md      ← 퀴즈 생성 담당
+    │   └── quiz-checker.md      ← 검수 담당 (Read만 허용)
+    └── skills/
+        └── quiz-format/
+            └── SKILL.md          ← 문항 형식 절차서</code></pre></div></div></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="cur" style="flex:6"><b style="width:66.7%"></b></i><i class="fut" style="flex:7"><b style="width:0.0%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>5</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 5 · M1 하네스 입문 · 소요 5분</div><p>이 플러그인은 <code>/quiz</code>처럼 정해진 커맨드가 아니라, 문장이 "팀을 구성해 달라"는 요청임을 Claude가 스스로 알아보고 스킬을 실행한다. 처음에는 여러 파일을 한꺼번에 만들므로 플랜 모드(M2에서 배운 Shift+Tab)로 계획을 확인하고 승인하는 습관을 들인다(파일 수정 전 계획 확인). 생성된 <code>quiz-checker.md</code>를 열어 보면 <code>name</code>, <code>description</code>, <code>tools: Read</code>, "하지 않는 일"이 이미 들어 있다. 파일 내용은 플러그인이 대신 써 준 것이고, M2에서 열어 보고 말로 고친다고 예고한다. 최신 Claude Code는 Auto 모드로 시작할 수 있고, 계획 승인 화면의 선택지는 "Yes, and use auto mode / Yes, manually approve edits / No, keep planning"이다. 첫 번째를 고르면 세션이 Auto 모드(분류 모델이 대신 검토)로 바뀌므로 연수에서는 "manually approve edits"를 고르게 한다. 상태 표시줄 문구 <code>⏸ plan mode on</code>은 확인됨. 새로 만들어진 <code>.claude</code> 폴더를 Claude Code가 인식하지 못하면 <code>/exit</code> 후 <code>claude</code>로 다시 시작한다(세션 시작 때 없던 agents/skills 폴더는 재시작이 필요할 수 있다). (5분)</p><div class="nx"><b>도식 설명(강사용)</b> 입력 문장 → 플랜 모드 계획 확인 → 승인(Yes, manually approve edits) → <code>.claude/</code> 폴더 생성. 계획 확인 단계에 "읽기 전용 계획 확인" 표식.</div><div class="nx"><b>막힐 때</b><ul><li>플러그인이 반응하지 않고 일반 답변만 한다 → 문장 맨 앞이 "하네스를 구성해줘"로 읽히도록 위 문장을 그대로 붙여 넣는다.</li><li>파일 이름이 나와 다르다 → 정상이다. 에이전트 2개와 스킬 1개가 있으면 된다.</li><li>계획 승인 화면의 선택지가 다르게 보인다 → 최신 버전은 "Yes, and use auto mode / Yes, manually approve edits / No, keep planning" 세 가지다. 두 번째를 고른다.</li></ul></div></div></section>
+
+<section class="slide k-실습" id="s6" data-n="6" data-kind="실습" data-min="5" data-module="M1" data-track="t2" data-fsmax="32"><header class="hd"><span class="hd-mod"><b>M1</b>하네스 입문</span><span class="hd-meta"><span class="kind k-실습">실습</span></span></header><h2 class="title">실습: 팀 실행하고 검수 결과 보기</h2><div class="body prac ovc"><div class="col steps ovc"><div class="lbl l-step">단계</div><ol class="tl"><li><span class="sn">1</span><div class="st">만드는 에이전트와 검수 에이전트가 따로 일한다</div></li><li><span class="sn">2</span><div class="st">검수 에이전트가 문항의 문제를 지적하는지 확인한다</div></li></ol><div class="resbox mov"><div class="lbl l-res">예상 결과</div><p>예시 터미널(내용은 실행마다 다름)</p></div><div class="stkbox mov"><div class="lbl l-stk">막힐 때</div><ul><li>검수 에이전트가 호출되지 않는다 → 프롬프트 끝의 "검수까지 맡겨줘"를 빼먹지 않았는지 확인하고 다시 보낸다. 안 되면 <code>.claude/agents/</code> 폴더에 두 파일(quiz-writer, quiz-checker)이 있는지 확인한다.</li><li>지적 사항이 없다고 나온다 → 정상일 수 있다. 주제를 "이진 탐색 vs 선형 탐색"처럼 헷갈리기 쉬운 것으로 바꿔 다시 요청해 본다.</li></ul></div></div><div class="col main ovc"><div class="grp"><svg class="dg " viewBox="0 0 666 128" role="img" aria-label="quiz-writer가 만든 문항을 quiz-checker가 별도 컨텍스트에서 읽기만 하며 검수한다"><rect x="0" y="36" width="200" height="76" rx="6" class="n"/><text x="100" y="59.5" font-size="21" text-anchor="middle" dominant-baseline="central" class="mono b">quiz-writer</text><text x="100" y="89.125" font-size="20" text-anchor="middle" dominant-baseline="central" class="t3">문항 생성</text><path d="M204 74 L236 74" class="ln" marker-end="url(#ah-ink)"/><rect x="240" y="36" width="250" height="76" rx="6" class="nt"/><text x="365" y="59.5" font-size="21" text-anchor="middle" dominant-baseline="central" class="mono b">quiz-checker</text><text x="365" y="89.125" font-size="20" text-anchor="middle" dominant-baseline="central" class="tt m">별도 컨텍스트, 읽기만</text><rect x="386" y="2" width="104" height="30" rx="15" class="ntf"/><text x="438" y="17" font-size="20" text-anchor="middle" dominant-baseline="central" class="tw b">다른 눈</text><path d="M494 74 L526 74" class="ln acc" marker-end="url(#ah-acc)"/><rect x="530" y="46" width="136" height="56" rx="6" class="naw"/><text x="598" y="74" font-size="21" text-anchor="middle" dominant-baseline="central" class="ta b">지적 사항</text></svg></div><div class="grp"><div class="prompt-box"><button class="copy" type="button">복사</button><pre><code>이진 탐색 개념으로 객관식 퀴즈 3문항을 만들고 검수까지 맡겨줘</code></pre></div></div><div class="grp resshort"><div class="lbl l-res">예상 결과 · 화면</div><div class="terminal"><pre><code>quiz-writer가 문항을 생성했습니다. quiz-checker를 호출합니다…
+[quiz-checker] 2번 문항: 보기 ③과 ④가 모두 조건을 만족해 정답이
+두 개로 해석될 수 있습니다. 보기 수정을 권장합니다.</code></pre></div></div></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="cur" style="flex:6"><b style="width:83.3%"></b></i><i class="fut" style="flex:7"><b style="width:0.0%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>6</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 6 · M1 하네스 입문 · 소요 5분</div><p>주제는 담당 과목에 맞게 바꿔도 된다. 핵심은 "만드는 역할과 검수하는 역할이 서로 다른 컨텍스트에서 실행됐다"는 점을 눈으로 확인하는 것이다. 지적 내용은 예시이고 실제 출력과 달라도 괜찮다. 시간이 남는 참가자는 내용 확인 후 "내가 보기엔 이 지적이 맞나?"를 직접 판단해 본다(사람의 눈도 최종 검수). 끝나면 손 들기: "검수 에이전트의 지적이 나온 분?" <code>/agents</code>는 최신 버전에서 목록을 보여 주지 않고 관리 안내만 출력하므로(예전 버전은 목록·생성 화면) 에이전트 확인은 폴더 열기로 한다. (5분)</p><div class="nx"><b>도식 설명(강사용)</b> quiz-writer(문항 생성) → quiz-checker(별도 컨텍스트, 읽기만) → 지적 사항, 화살표 흐름. checker 칸에 "다른 눈" 라벨.</div><div class="nx"><b>막힐 때</b><ul><li>검수 에이전트가 호출되지 않는다 → 프롬프트 끝의 "검수까지 맡겨줘"를 빼먹지 않았는지 확인하고 다시 보낸다. 안 되면 <code>.claude/agents/</code> 폴더에 두 파일(quiz-writer, quiz-checker)이 있는지 확인한다.</li><li>지적 사항이 없다고 나온다 → 정상일 수 있다. 주제를 "이진 탐색 vs 선형 탐색"처럼 헷갈리기 쉬운 것으로 바꿔 다시 요청해 본다.</li></ul></div></div></section>
+
+<section class="slide k-정리" id="s7" data-n="7" data-kind="정리" data-min="2" data-module="M1" data-track="t2" data-fsmax="30"><header class="hd"><span class="hd-mod"><b>M1</b>하네스 입문</span><span class="hd-meta"><span class="kind k-정리">정리</span></span></header><h2 class="title">정리: 하네스가 만든 것</h2><div class="body stack ovc"><div class="lead ovc"><p>하네스가 만든 것: <code>mini-harness/.claude/</code> (에이전트 2개 + 스킬 1개)</p><p>다음 M2: 이 파일을 열어 읽고, 말로 고친다</p></div><div class="vis ovc"><svg class="dg " viewBox="0 0 1152 400" role="img" aria-label="mini-harness 폴더 트리와 에이전트·스킬·오케스트레이터의 한 줄 정의, 심화 선택 /harness:evolve"><text x="0" y="18" font-size="22" text-anchor="start" dominant-baseline="central" class="mono b">mini-harness/</text><text x="0" y="52" font-size="22" text-anchor="start" dominant-baseline="central" class="mono b">└── .claude/</text><text x="0" y="86" font-size="22" text-anchor="start" dominant-baseline="central" class="mono m">    ├── agents/</text><text x="0" y="120" font-size="22" text-anchor="start" dominant-baseline="central" class="mono b">    │   ├── quiz-writer.md</text><text x="0" y="154" font-size="22" text-anchor="start" dominant-baseline="central" class="mono b">    │   └── quiz-checker.md</text><text x="0" y="188" font-size="22" text-anchor="start" dominant-baseline="central" class="mono m">    └── skills/</text><text x="0" y="222" font-size="22" text-anchor="start" dominant-baseline="central" class="mono m">        └── quiz-format/</text><text x="0" y="256" font-size="22" text-anchor="start" dominant-baseline="central" class="mono b">            └── SKILL.md</text><rect x="640" y="6" width="512" height="98" rx="6" class="nt"/><text x="658" y="32" font-size="24" text-anchor="start" dominant-baseline="central" class="tt b">에이전트</text><text x="658" y="64" font-size="21" text-anchor="start" dominant-baseline="central" class="t2 m">역할이 정해진 하위 작업자 파일</text><text x="658" y="90" font-size="18" text-anchor="start" dominant-baseline="central" class="mono t3">.claude/agents/*.md</text><rect x="640" y="118" width="512" height="98" rx="6" class="nteal"/><text x="658" y="144" font-size="24" text-anchor="start" dominant-baseline="central" class="tteal b">스킬</text><text x="658" y="176" font-size="21" text-anchor="start" dominant-baseline="central" class="t2 m">재사용하는 절차를 적은 파일</text><text x="658" y="202" font-size="18" text-anchor="start" dominant-baseline="central" class="mono t3">.claude/skills/*/SKILL.md</text><rect x="640" y="232" width="512" height="86" rx="6" class="n"/><text x="658" y="258" font-size="24" text-anchor="start" dominant-baseline="central" class="t2 b">오케스트레이터</text><text x="658" y="290" font-size="21" text-anchor="start" dominant-baseline="central" class="t2 m">실행 순서를 정한 스킬 파일</text><path d="M357.2 120 L590 120 L590 55 L636 55" class="ln" marker-end="url(#ah-ink)"/><path d="M370.4 154 L590 154 L590 55" class="ln"/><path d="M330.8 256 L610 256 L610 167 L636 167" class="ln teal" marker-end="url(#ah-teal)"/><path d="M330.8 222 L570 222 L570 275 L636 275" class="ln mute" marker-end="url(#ah-mute)"/><rect x="0" y="336" width="1152" height="58" rx="6" class="n2"/><rect x="14" y="348" width="110" height="34" rx="17" class="ntf"/><text x="69" y="365" font-size="20" text-anchor="middle" dominant-baseline="central" class="tw b">심화 선택</text><text x="140" y="365" font-size="19" text-anchor="start" dominant-baseline="central" class="t2 m">/harness:evolve = 팀을 고친 뒤 처음 설계와 최종 형태가 어떻게 달라졌는지 기록하는 명령. 지금은 이런 게 있다는 정도만.</text></svg></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="cur" style="flex:6"><b style="width:100.0%"></b></i><i class="fut" style="flex:7"><b style="width:0.0%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>7</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 7 · M1 하네스 입문 · 소요 2분</div><p>방금 경험한 것은 만드는 역할과 검수하는 역할이 나뉜 팀을 말로 요청해 파일로 받고 실행한 것이다. 퀴즈를 만든 쪽과 검수한 쪽이 서로 다른 컨텍스트에서 실행되므로 한 에이전트가 "내 답이 맞겠지" 하고 넘어가는 문제가 줄어든다. 구성 요소 이름은 정의 한 줄만 말한다. 이 연수는 이 파일들을 처음부터 설계하는 법이 아니라, 하네스가 만들어 준 파일을 읽고 말로 고치는 법을 다룬다. 다음 M2 예고: 방금 만든 <code>mini-harness/.claude/</code>를 열어 보고, 검수 기준을 말로 고쳐 다시 실행한다. <code>/harness:evolve</code>는 심화 선택 박스로 한 줄만 소개하고 넘어간다. (2분)</p><div class="nx"><b>도식 설명(강사용)</b> 왼쪽 폴더 트리(<code>mini-harness/.claude/agents/quiz-writer.md</code>, <code>quiz-checker.md</code>, <code>skills/quiz-format/SKILL.md</code>), 오른쪽에 세 구성 요소 이름과 한 줄 정의를 해당 파일 옆에 연결선으로 표시. 오케스트레이터는 "실행 순서를 정한 스킬 파일" 한 줄로만 표시. 맨 아래 작은 칸 <code>심화 선택</code>: "<code>/harness:evolve</code> = 팀을 고친 뒤 처음 설계와 최종 형태가 어떻게 달라졌는지 기록하는 명령. 지금은 이런 게 있다는 정도만."</div><div class="nx"><b>막힐 때</b><p>플러그인 설치 또는 팀 생성이 안 된 경우 짝 화면을 함께 보며 따라간다.</p></div></div></section>
+
+<section class="slide k-개념 opener" id="s8" data-n="8" data-kind="개념" data-min="2" data-module="M2" data-track="t2" data-fsmax="30"><aside class="rail"><div class="rlab">모듈</div><div class="rbig"><span class="rk">M</span><span class="rn">2</span></div><div class="rname">하네스가 만든 파일 읽고 고치기</div><dl><dt>시간</dt><dd>18분</dd><dt>슬라이드</dt><dd>8–14</dd></dl><div class="rg"><div class="lbl ">학습 목표</div><p>하네스가 만든 <code>.claude/</code> 파일을 열어 읽고, 말로 고쳐 다시 실행해 결과를 비교할 수 있다.</p></div></aside><header class="hd"><span class="hd-mod"><b>M2</b>하네스가 만든 파일 읽고 고치기</span><span class="hd-meta"><span class="kind k-개념">개념</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">하네스가 만든 폴더 지도</h2><div class="body stack ovc"><div class="lead ovc"><p>하네스가 만든 팀은 <code>.claude/</code> 폴더 안의 <strong>마크다운 파일</strong>이다. 파일을 열면 팀의 구성이 그대로 보인다.</p><p>오늘은 이 파일들을 <strong>읽고, 말로 고치고, 다시 실행</strong>한다. 처음부터 쓰지 않는다.</p><p>에이전트 = 역할이 정해진 하위 작업자를 정의한 파일(<code>.claude/agents/*.md</code>, 한 파일에 한 에이전트)</p><p>스킬 = 재사용하는 작업 절차를 적은 파일(<code>.claude/skills/이름/SKILL.md</code>)</p><p>오케스트레이터 = 팀의 실행 순서를 정한 스킬</p></div><div class="vis ovc"><svg class="dg " viewBox="0 0 1152 340" role="img" aria-label="mini-harness 폴더 트리와 각 파일의 한 줄 정의. 파일 이름과 개수는 하네스가 정한다"><text x="0" y="18" font-size="22" text-anchor="start" dominant-baseline="central" class="mono b">mini-harness/</text><text x="0" y="52" font-size="22" text-anchor="start" dominant-baseline="central" class="mono b">└── .claude/</text><text x="0" y="86" font-size="22" text-anchor="start" dominant-baseline="central" class="mono m">    ├── agents/</text><text x="0" y="120" font-size="22" text-anchor="start" dominant-baseline="central" class="mono b">    │   ├── quiz-writer.md</text><text x="0" y="154" font-size="22" text-anchor="start" dominant-baseline="central" class="mono b">    │   └── quiz-checker.md</text><text x="0" y="188" font-size="22" text-anchor="start" dominant-baseline="central" class="mono m">    └── skills/</text><text x="0" y="222" font-size="22" text-anchor="start" dominant-baseline="central" class="mono b">        └── quiz-.../</text><text x="0" y="256" font-size="22" text-anchor="start" dominant-baseline="central" class="mono b">            └── SKILL.md</text><path d="M357.2 120 L468 120" class="ln " marker-end="url(#ah-ink)"/><rect x="474" y="105" width="430" height="30" rx="6" class="nt"/><text x="488" y="120" font-size="19" text-anchor="start" dominant-baseline="central" class="tt b">에이전트: 문항을 만드는 역할</text><path d="M370.4 154 L468 154" class="ln " marker-end="url(#ah-ink)"/><rect x="474" y="139" width="430" height="30" rx="6" class="nt"/><text x="488" y="154" font-size="19" text-anchor="start" dominant-baseline="central" class="tt b">에이전트: 문항을 검수하는 역할</text><path d="M291.2 222 L468 222" class="ln teal" marker-end="url(#ah-teal)"/><rect x="474" y="207" width="676" height="30" rx="6" class="nteal"/><text x="488" y="222" font-size="19" text-anchor="start" dominant-baseline="central" class="tteal b">오케스트레이터 스킬: writer → checker 순서를 정한 절차 (예)</text><text x="0" y="316" font-size="21" text-anchor="start" dominant-baseline="central" class="ta b">파일 이름과 개수는 하네스가 실행마다 정한다. 위는 예시.</text></svg></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="cur" style="flex:7"><b style="width:14.3%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>8</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 8 · M2 하네스가 만든 파일 읽고 고치기 · 소요 2분</div><p>M1에서 하네스가 만든 파일의 위치를 지도로 한 번 보여 주는 슬라이드다. 구성 요소 정의는 한 줄씩만 말하고 원리 설명으로 들어가지 않는다. 핵심 메시지는 "하네스가 만든 것은 눈에 보이는 일반 파일이므로 열어서 읽고 말로 고칠 수 있다"이다. 파일 이름은 5·6번 예시와 맞췄고 실행마다 다를 수 있다고 말한다 <span class="chk" title="오케스트레이터 스킬 폴더의 실제 이름">확인 필요</span>. (2분)</p><div class="nx"><b>도식 설명(강사용)</b> 폴더 트리 + 파일별 한 줄 정의 (이 슬라이드의 유일한 도식). 왼쪽에 트리, 오른쪽에 각 줄의 한 줄 정의를 화살표로 연결.</div></div></section>
+
+<section class="slide k-실습" id="s9" data-n="9" data-kind="실습" data-min="3" data-module="M2" data-track="t2" data-fsmax="32"><header class="hd"><span class="hd-mod"><b>M2</b>하네스가 만든 파일 읽고 고치기</span><span class="hd-meta"><span class="kind k-실습">실습</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">실습: 생성된 파일 열어 보고 구조 설명받기</h2><div class="body prac ovc"><div class="col steps ovc"><div class="lbl l-step">단계</div><ol class="tl"><li><span class="sn">1</span><div class="st">M1에서 팀을 만든 폴더에서 Claude Code를 연다 (<code>cd mini-harness</code> → <code>claude</code>)</div></li><li><span class="sn">2</span><div class="st"><code>!</code>로 시작하는 입력은 Claude Code 안에서 터미널 명령을 그대로 실행한다</div></li><li><span class="sn">3</span><div class="st">목록을 확인한 뒤, Claude Code에게 구조를 설명해 달라고 한다</div></li></ol><div class="resbox mov"><div class="lbl l-res">예상 결과</div><p><code>agents</code>에 <code>quiz-writer.md</code>, <code>quiz-checker.md</code> 같은 파일이, <code>skills</code>에 폴더가 하나 이상 보인다(예: 이름은 실행마다 다름). 설명은 "writer가 문항 생성 → checker가 검수 → 결과 정리" 같은 3줄이다.</p></div><div class="stkbox mov"><div class="lbl l-stk">막힐 때</div><ul><li><code>ls</code>에 아무것도 안 나온다 → 팀을 만든 폴더가 아니다. <code>! pwd</code>로 위치를 확인하고 M1에서 쓴 폴더로 이동해 <code>claude</code>를 다시 연다.</li><li><code>.claude</code> 폴더는 있는데 Claude Code가 에이전트를 모른다고 한다 → <code>/exit</code> 후 <code>claude</code>로 재시작한다 <span class="chk" title="재시작 필요 여부">확인 필요</span>.</li><li>설명이 3줄보다 길다 → 정상이다. 그대로 읽고 다음으로 간다.</li></ul></div></div><div class="col main ovc"><div class="grp"><p>Claude Code 입력창에서 목록 확인:</p><div class="prompt-box"><button class="copy" type="button">복사</button><pre><code>! ls .claude/agents .claude/skills</code></pre></div><p>이어서:</p><div class="prompt-box"><button class="copy" type="button">복사</button><pre><code>.claude 폴더에 있는 에이전트와 스킬 파일을 읽고, 이 팀의 구조를 3줄로 설명해줘. 누가 무엇을 하는지와 실행 순서가 들어가게 해줘</code></pre></div></div></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="cur" style="flex:7"><b style="width:28.6%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>9</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 9 · M2 하네스가 만든 파일 읽고 고치기 · 소요 3분</div><p>목록은 사람이 직접 확인하고 구조 이해는 Claude Code에게 맡긴다. 파일을 열고 싶은 참가자는 에디터로 <code>quiz-checker.md</code>를 열어 봐도 된다. 읽을 때 볼 것은 "역할 설명이 내 수업 맥락과 맞는가" 하나뿐이다. 문법이나 각 항목의 의미는 설명하지 않는다. (3분)</p><div class="nx"><b>도식 설명(강사용)</b> 2단계 가로 흐름: <code>! ls</code> 로 파일 목록 확인 → 말로 "3줄 설명" 요청.</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>재시작 필요 여부</li></ul></div><div class="nx"><b>막힐 때</b><ul><li><code>ls</code>에 아무것도 안 나온다 → 팀을 만든 폴더가 아니다. <code>! pwd</code>로 위치를 확인하고 M1에서 쓴 폴더로 이동해 <code>claude</code>를 다시 연다.</li><li><code>.claude</code> 폴더는 있는데 Claude Code가 에이전트를 모른다고 한다 → <code>/exit</code> 후 <code>claude</code>로 재시작한다 <span class="chk" title="재시작 필요 여부">확인 필요</span>.</li><li>설명이 3줄보다 길다 → 정상이다. 그대로 읽고 다음으로 간다.</li></ul></div></div></section>
+
+<section class="slide k-실습" id="s10" data-n="10" data-kind="실습" data-min="4" data-module="M2" data-track="t2" data-fsmax="32"><header class="hd"><span class="hd-mod"><b>M2</b>하네스가 만든 파일 읽고 고치기</span><span class="hd-meta"><span class="kind k-실습">실습</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">실습: 말로 고치기</h2><div class="body prac ovc"><div class="col steps ovc"><div class="lbl l-step">단계</div><ol class="tl"><li><span class="sn">1</span><div class="st">파일을 직접 편집하지 않는다. <strong>고치고 싶은 점을 문장으로</strong> 말한다.</div></li><li><span class="sn">2</span><div class="st">두 가지를 요청한다: ① 검수 기준 한 줄 추가 ② 만드는 문항 수 변경</div></li><li><span class="sn">3</span><div class="st">바뀐 곳만 보여 달라고 해서 <strong>무엇이 바뀌었는지</strong> 눈으로 확인한다</div></li></ol><div class="resbox mov"><div class="lbl l-res">예상 결과</div><p>두 파일에서 각각 한두 줄이 추가·변경된 모습이 나온다(예: 검수 기준 목록에 한 줄 추가, 문항 수 숫자 3 → 5). 고친 파일 이름은 실제 생성된 이름을 따른다.</p></div><div class="stkbox mov"><div class="lbl l-stk">막힐 때</div><ul><li>파일 수정을 승인하라는 화면이 나온다 → 정상이다. 바뀔 내용을 읽고 승인한다.</li><li>기본 문항 수가 파일에 적혀 있지 않다고 한다 → 정상일 수 있다. "문항 수는 요청에서 정하게 두고, 따로 없으면 5개를 기본으로 한다는 문장을 추가해줘"라고 이어서 말한다.</li><li>고친 뒤에도 다음 실행에서 예전 동작이 나온다 → <code>/exit</code> 후 <code>claude</code>로 재시작한다 <span class="chk" title="재시작 필요 여부">확인 필요</span>.</li><li>오류 메시지가 나온다 → 읽으려 하지 말고 그대로 Claude Code에게 붙여 넣어 "이 오류를 고쳐줘"라고 한다.</li></ul></div></div><div class="col main ovc"><div class="grp"><div class="prompt-box"><button class="copy" type="button">복사</button><pre><code>quiz-checker의 검수 기준에 &quot;정답이 둘 이상으로 해석되는 보기는 반드시 지적한다&quot;를 한 줄 추가하고, quiz-writer가 만드는 기본 문항 수를 5개로 바꿔줘. 파일을 고치기 전에 무엇을 바꿀지 먼저 알려줘</code></pre></div><p>수정이 끝나면:</p><div class="prompt-box"><button class="copy" type="button">복사</button><pre><code>방금 바꾼 줄만 보여줘</code></pre></div></div></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="cur" style="flex:7"><b style="width:42.9%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>10</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 10 · M2 하네스가 만든 파일 읽고 고치기 · 소요 4분</div><p>이 슬라이드의 핵심은 "말로 요청하면 하네스가 만든 파일이 고쳐지고, 바뀐 곳은 확인할 수 있다"는 흐름이다. 사람이 하는 일은 승인과 확인이다. 검수 기준 문장은 자기 교과에 맞게 바꿔도 된다(예: "코드 예시는 실행 결과까지 확인한다"). (4분)</p><div class="nx"><b>도식 설명(강사용)</b> 3단계 흐름: 말로 요청 → Claude Code가 파일 수정(승인) → "바뀐 줄만 보여줘"로 확인.</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>재시작 필요 여부</li></ul></div><div class="nx"><b>막힐 때</b><ul><li>파일 수정을 승인하라는 화면이 나온다 → 정상이다. 바뀔 내용을 읽고 승인한다.</li><li>기본 문항 수가 파일에 적혀 있지 않다고 한다 → 정상일 수 있다. "문항 수는 요청에서 정하게 두고, 따로 없으면 5개를 기본으로 한다는 문장을 추가해줘"라고 이어서 말한다.</li><li>고친 뒤에도 다음 실행에서 예전 동작이 나온다 → <code>/exit</code> 후 <code>claude</code>로 재시작한다 <span class="chk" title="재시작 필요 여부">확인 필요</span>.</li><li>오류 메시지가 나온다 → 읽으려 하지 말고 그대로 Claude Code에게 붙여 넣어 "이 오류를 고쳐줘"라고 한다.</li></ul></div></div></section>
+
+<section class="slide k-실습" id="s11" data-n="11" data-kind="실습" data-min="3" data-module="M2" data-track="t2" data-fsmax="32"><header class="hd"><span class="hd-mod"><b>M2</b>하네스가 만든 파일 읽고 고치기</span><span class="hd-meta"><span class="kind k-실습">실습</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">실습: 고친 팀 다시 실행해 비교하기</h2><div class="body prac ovc"><div class="col steps ovc"><div class="lbl l-step">단계</div><ol class="tl"><li><span class="sn">1</span><div class="st">6번에서 쓴 요청과 같은 문장으로 다시 실행한다</div></li><li><span class="sn">2</span><div class="st">이전 결과와 비교: 문항 수, 검수 지적의 달라진 점</div></li></ol><div class="resbox mov"><div class="lbl l-res">예상 결과</div><p>문항이 5개로 나오고, 정답이 둘로 해석될 수 있는 보기가 있으면 검수 에이전트가 지적한다(예: 내용은 실행마다 다름). 지적이 없으면 검수 기준에 걸리는 문항이 없었다는 뜻일 수 있다.</p></div><div class="stkbox mov"><div class="lbl l-stk">막힐 때</div><ul><li>문항이 여전히 3개다 → <code>/exit</code> 후 <code>claude</code>로 재시작하고 다시 보낸다 <span class="chk" title="재시작 필요 여부">확인 필요</span>. 그래도 같으면 "quiz-writer.md의 문항 수 부분을 보여줘"라고 해서 고쳐진 내용을 확인한다.</li><li>검수 에이전트가 호출되지 않는다 → 문장 끝의 "검수까지 맡겨줘"를 그대로 쓴다. <code>.claude/agents/</code>에 <code>quiz-checker.md</code>가 있는지 확인한다.</li></ul></div></div><div class="col main ovc"><div class="grp"><div class="prompt-box"><button class="copy" type="button">복사</button><pre><code>이진 탐색 개념으로 객관식 퀴즈를 만들고 검수까지 맡겨줘</code></pre></div></div></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="cur" style="flex:7"><b style="width:57.1%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>11</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 11 · M2 하네스가 만든 파일 읽고 고치기 · 소요 3분</div><p>고친 말이 실행 결과에 반영되는 것을 눈으로 확인하는 단계다. 결과 비교는 완벽한 일치가 아니라 "달라진 점이 있는가"만 본다. 출력은 실행마다 다르다. 시간이 남으면 "지적이 맞는지 내 판단은?"을 짝과 이야기한다. (3분)</p><div class="nx"><b>도식 설명(강사용)</b> 좌우 2열 비교표. 왼쪽 "M1 실행 결과(3문항)", 오른쪽 "고친 뒤 결과(5문항)". 비교 항목: 문항 수 / 검수 지적 / 정답 해석.</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>재시작 필요 여부</li></ul></div><div class="nx"><b>막힐 때</b><ul><li>문항이 여전히 3개다 → <code>/exit</code> 후 <code>claude</code>로 재시작하고 다시 보낸다 <span class="chk" title="재시작 필요 여부">확인 필요</span>. 그래도 같으면 "quiz-writer.md의 문항 수 부분을 보여줘"라고 해서 고쳐진 내용을 확인한다.</li><li>검수 에이전트가 호출되지 않는다 → 문장 끝의 "검수까지 맡겨줘"를 그대로 쓴다. <code>.claude/agents/</code>에 <code>quiz-checker.md</code>가 있는지 확인한다.</li></ul></div></div></section>
+
+<section class="slide k-실습" id="s12" data-n="12" data-kind="실습" data-min="4" data-module="M2" data-track="t2" data-fsmax="32"><header class="hd"><span class="hd-mod"><b>M2</b>하네스가 만든 파일 읽고 고치기</span><span class="hd-meta"><span class="kind k-실습">실습</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">실습: 내 업무용 새 팀을 하네스에게 요청하기</h2><div class="body prac ovc"><div class="col steps ovc"><div class="lbl l-step">단계</div><ol class="tl"><li><span class="sn">1</span><div class="st">5번과 같은 방식: <strong>"하네스를 구성해줘" + 하고 싶은 일</strong>을 문장으로 설명</div></li><li><span class="sn">2</span><div class="st">플랜 모드로 계획을 확인하고 승인한다 (<code>Shift+Tab</code>, 선택지는 "Yes, manually approve edits")</div></li><li><span class="sn">3</span><div class="st">오늘은 수업안 작성 도우미를 예로 든다. 내 업무에 맞게 바꿔도 된다.</div></li></ol><div class="resbox mov"><div class="lbl l-res">예상 결과</div><p>계획 화면에 만들 파일 목록이 나오고, 승인하면 <code>.claude/agents/</code>에 에이전트 파일 두 개와 <code>.claude/skills/</code>에 절차 스킬이 생긴다(예: 이름·개수는 실행마다 다름).</p></div><div class="stkbox mov"><div class="lbl l-stk">막힐 때</div><ul><li>하네스가 아니라 일반 답변만 한다 → 플러그인 설치를 확인한다(4번). 문장 맨 앞의 "하네스를 구성해줘"는 그대로 둔다.</li><li>파일이 생겼는데 슬래시나 호출이 인식되지 않는다 → <code>/exit</code> 후 <code>claude</code>로 재시작한다 <span class="chk" title="재시작 필요 여부">확인 필요</span>.</li><li>계획 승인 선택지가 다르게 보인다 → "Yes, manually approve edits"에 해당하는 항목을 고른다.</li></ul></div></div><div class="col main ovc"><div class="grp"><p>새 폴더에서 <code>claude</code>를 열고 (예: <code>mkdir lesson-helper &amp;&amp; cd lesson-helper &amp;&amp; claude</code>):</p><div class="prompt-box"><button class="copy" type="button">복사</button><pre><code>하네스를 구성해줘. 단원과 학습 목표를 주면 수업안 초안을 쓰는 역할과, 초안이 학습 목표와 맞는지 검수하는 역할로 구성해줘. 검수는 파일을 고치지 않고 읽기만 해줘</code></pre></div></div></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="cur" style="flex:7"><b style="width:71.4%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>12</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 12 · M2 하네스가 만든 파일 읽고 고치기 · 소요 4분</div><p>슬라이드 10의 "말로 고치기"를 새 팀에도 쓸 수 있음을 보여 주는 슬라이드다. 학생 실명·성적 같은 개인정보는 요청 문장에 넣지 않는다. 만들어진 팀을 실행하는 단계는 시간상 하지 않는다. 파일이 생성되는 데 시간이 걸리는 참가자는 짝 화면을 함께 본다. (4분)</p><div class="nx"><b>도식 설명(강사용)</b> 입력 문장 → 플랜 모드 계획 확인 → 승인 → <code>.claude/</code> 아래에 파일 추가, 3단계 가로 흐름. 5번 도식의 축약판.</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>재시작 필요 여부</li></ul></div><div class="nx"><b>막힐 때</b><ul><li>하네스가 아니라 일반 답변만 한다 → 플러그인 설치를 확인한다(4번). 문장 맨 앞의 "하네스를 구성해줘"는 그대로 둔다.</li><li>파일이 생겼는데 슬래시나 호출이 인식되지 않는다 → <code>/exit</code> 후 <code>claude</code>로 재시작한다 <span class="chk" title="재시작 필요 여부">확인 필요</span>.</li><li>계획 승인 선택지가 다르게 보인다 → "Yes, manually approve edits"에 해당하는 항목을 고른다.</li></ul></div></div></section>
+
+<section class="slide k-점검" id="s13" data-n="13" data-kind="점검" data-min="1" data-module="M2" data-track="t2" data-fsmax="30"><header class="hd"><span class="hd-mod"><b>M2</b>하네스가 만든 파일 읽고 고치기</span><span class="hd-meta"><span class="kind k-점검">점검</span></span></header><h2 class="title">점검: 하네스가 만든 것, 사람이 확인할 것</h2><div class="body stack ovc"><div class="vis"><div class="cards c3 ckcs"><div class="card ckc"><i class="box"></i><p>만들어진 내용(퀴즈·수업안)이 <strong>내 교과 내용으로 맞는가</strong></p></div><div class="card ckc"><i class="box"></i><p>검수 기준이 <strong>내가 중요하게 보는 기준과 맞는가</strong> (맞지 않으면 말로 고친다)</p></div><div class="card ckc"><i class="box"></i><p>파일과 요청 문장에 <strong>학생 개인정보가 없는가</strong></p></div></div></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="cur" style="flex:7"><b style="width:85.7%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>13</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 13 · M2 하네스가 만든 파일 읽고 고치기 · 소요 1분</div><p>사람이 확인할 것은 문법이나 파일 형식이 아니라 "무엇이 만들어졌는지"와 "내 교과 내용이 맞는지"다. 하네스가 만든 검수 에이전트가 있어도 교과 내용의 최종 판단은 교사의 몫이다. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> 체크박스 3개 카드 가로 배열.</div><div class="nx"><b>막힐 때</b><p>기준이 애매하면 슬라이드 10의 방식으로 검수 기준을 말로 추가한다.</p></div></div></section>
+
+<section class="slide k-정리" id="s14" data-n="14" data-kind="정리" data-min="1" data-module="M2" data-track="t2" data-fsmax="32"><header class="hd"><span class="hd-mod"><b>M2</b>하네스가 만든 파일 읽고 고치기</span><span class="hd-meta"><span class="kind k-정리">정리</span></span></header><h2 class="title">정리: 하네스로 만들고, 말로 고치고, 다시 실행</h2><div class="body stack summ ovc"><div class="lead ovc"><p>고칠 때는 파일을 직접 편집하지 않고 Claude Code에게 말한다. 오류는 그대로 붙여 넣는다.</p></div><div class="vis ovc"><svg class="dg " viewBox="0 0 1152 130" role="img" aria-label="말로 요청, 생성 파일 읽기, 말로 고치기, 다시 실행해 비교로 이어지고 다음은 Firebase(M3)"><rect x="0" y="20" width="170" height="84" rx="6" class="nt"/><text x="85" y="48.75" font-size="24" text-anchor="middle" dominant-baseline="central" class="b">말로 요청</text><text x="85" y="79" font-size="18" text-anchor="middle" dominant-baseline="central" class="t3">M1</text><path d="M176 62 L212 62" class="ln" marker-end="url(#ah-ink)"/><rect x="218" y="20" width="170" height="84" rx="6" class="n"/><text x="303" y="48.75" font-size="24" text-anchor="middle" dominant-baseline="central" class="b">생성 파일 읽기</text><text x="303" y="79" font-size="18" text-anchor="middle" dominant-baseline="central" class="t3">9번</text><path d="M394 62 L430 62" class="ln" marker-end="url(#ah-ink)"/><rect x="436" y="20" width="170" height="84" rx="6" class="nteal"/><text x="521" y="48.75" font-size="24" text-anchor="middle" dominant-baseline="central" class="b">말로 고치기</text><text x="521" y="79" font-size="18" text-anchor="middle" dominant-baseline="central" class="t3">10번</text><path d="M612 62 L648 62" class="ln" marker-end="url(#ah-ink)"/><rect x="654" y="20" width="170" height="84" rx="6" class="nt"/><text x="739" y="48.75" font-size="24" text-anchor="middle" dominant-baseline="central" class="b">다시 실행</text><text x="739" y="79" font-size="18" text-anchor="middle" dominant-baseline="central" class="t3">11번</text><path d="M832 62 L896 62" class="ln acc thick" marker-end="url(#ah-acc)"/><rect x="904" y="20" width="248" height="84" rx="6" class="na"/><text x="1028" y="62" font-size="24" text-anchor="middle" dominant-baseline="central" class="tw b">다음: Firebase(M3)</text></svg></div></div><footer class="ft"><span class="ft-tr">Track 2 · 하네스 엔지니어링</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="cur" style="flex:7"><b style="width:100.0%"></b></i><i class="fut" style="flex:19"><b style="width:0.0%"></b></i></span><span class="ft-num"><b>14</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 14 · M2 하네스가 만든 파일 읽고 고치기 · 소요 1분</div><p>오늘 익힌 흐름(요청 → 읽기 → 고치기 → 실행)은 자기 교과 업무에도 같은 방식으로 쓸 수 있다. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> 4칸 가로 흐름(요청 → 읽기 → 고치기 → 실행). 맨 오른쪽에 화살표로 "다음: Firebase(M3)".</div></div></section>
+
+<section class="slide k-개념 opener" id="s15" data-n="15" data-kind="개념" data-min="1" data-module="M3" data-track="fb" data-fsmax="26"><aside class="rail"><div class="rlab">모듈</div><div class="rbig"><span class="rk">M</span><span class="rn">3</span></div><div class="rname">Firebase 기능 지도와 콘솔 설정</div><dl><dt>시간</dt><dd>27분</dd><dt>슬라이드</dt><dd>15–33</dd></dl><div class="rg"><div class="lbl ">학습 목표</div><p>Firebase 6개 항목을 언제 쓰는지 고르고, 콘솔에서 인증과 데이터베이스를 직접 설정할 수 있다. 접근 규칙은 Claude Code가 만든다.</p></div></aside><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-개념">개념</span></span></header><h2 class="title">Firebase 기능 지도: 앱 백엔드 서비스 묶음</h2><div class="body stack ovc"><div class="lead ovc"><ul><li>Firebase = Google의 앱 백엔드 플랫폼. 여러 서비스의 묶음이며 필요한 서비스만 골라 쓴다.</li><li>오늘 6개 항목: Authentication, Firestore, 요금제, Storage, Hosting, Cloud Functions</li><li>무료(Spark)로 되는 것과 결제 수단(Blaze)이 필요한 것이 나뉜다.</li></ul></div><div class="vis ovc"><div class="fmap c3"><div class="fm own"><div class="fm-a">사용자 인증, uid 발급</div><div class="fm-n">Authentication</div><div class="fm-x">로그인</div><div class="fm-p spark">Spark</div></div><div class="fm own"><div class="fm-a">문서 지향 NoSQL 데이터베이스</div><div class="fm-n">Firestore</div><div class="fm-x">수업 기록</div><div class="fm-p spark">Spark</div></div><div class="fm demo"><div class="fm-a">Spark = 무료 요금제 / Blaze = 종량제</div><div class="fm-n">요금제(Spark/Blaze)</div><div class="fm-x">선택</div><div class="fm-p none">선택</div></div><div class="fm demo"><div class="fm-a">파일(객체) 저장</div><div class="fm-n">Storage</div><div class="fm-x">큰 파일</div><div class="fm-p blaze">Blaze 필요</div></div><div class="fm demo"><div class="fm-a">정적 웹 콘텐츠 호스팅, 공개 URL</div><div class="fm-n">Hosting</div><div class="fm-x">공개 주소</div><div class="fm-p spark">Spark</div></div><div class="fm demo"><div class="fm-a">서버리스 백엔드 코드(비밀 키 사용 가능)</div><div class="fm-n">Cloud Functions</div><div class="fm-x">AI 피드백</div><div class="fm-p blaze">Blaze 필요</div></div></div><div class="fmleg"><span class="own">내가 직접 해 볼 것 = Authentication · Firestore</span><span class="demo">강사 시연(심화 선택) = 요금제 · Storage · Hosting · Functions</span></div><div class="info" style="margin-top:16px">접근을 제한하는 보안 규칙은 이 연수에서 설명하지 않는다. Claude Code가 작성하고 배포한다.</div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:5.3%"></b></i></span><span class="ft-num"><b>15</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 15 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p>오늘의 학습 목표는 "6개를 언제 쓰는지 고르고, 인증·DB를 설정한다"이다. 지도를 먼저 보여 주고, 앞쪽 2개는 직접 손을 움직인다고 예고한다. 접근 규칙은 설명하지 않고 Claude Code가 만든다는 점을 한 줄만 말한다. Spark/Blaze 표식은 사실표 8절 기준이다. Storage 표식은 "2026-02-03부터 Blaze 필요"이다(검수 확인: pricing 페이지 Spark의 Cloud Storage가 "Not applicable", Storage FAQ와 일치). Hosting이 Spark로 되는 이유는 사실표 8절. 클래스룸은 예시 소재일 뿐 앱을 만들지 않는다고 한 번 더 말한다. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> 6개 카드가 한 장에 놓인 지도. 카드마다 <code>[역할 한 줄] / 기능 이름 / 요금제 표식 / 클래스룸 예시 한 단어</code>.</div></div></section>
+
+<section class="slide k-실습" id="s16" data-n="16" data-kind="실습" data-min="3" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-실습">실습</span><span class="tag">참가자 실습</span><span class="tag">Spark</span><span class="tag">콘솔 직접 조작</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">공통 설정 1: 테스트 프로젝트 만들기</h2><div class="body prac console ovc"><div class="col ovc"><ul><li>Firebase 프로젝트 = 서비스·설정·앱을 묶는 최상위 단위. 하나 만들어 보자.</li><li>이름에 <strong>test</strong>를 넣는다. 실제 학생 정보는 넣지 않는다.</li></ul><div class="resbox mov"><div class="lbl l-res">예상 결과</div><p>프로젝트 개요(Overview) 페이지가 열려 있고 상단에 내 프로젝트 이름이 보인다.</p></div><div class="stkbox mov"><div class="lbl l-stk">막힐 때</div><ul><li>프로젝트 만들기가 막히거나 권한 오류 → 학교 관리(Workspace) 계정일 수 있다. 개인 구글 계정으로 다시 로그인 <span class="chk" title="학교 계정에서 생성이 막히는지">확인 필요</span>.</li><li>버튼 문구가 다르면 화면의 "프로젝트 추가/만들기"에 해당하는 버튼을 고른다. 강사 화면과 짝 화면을 본다.</li></ul></div></div><div class="col main ovc"><div class="grp diag csteps"><ol><li>console.firebase.google.com 에 개인 구글 계정으로 로그인</li><li><strong>프로젝트 만들기(추가)</strong> 버튼 클릭 <span class="chk" title="정확한 버튼 문구">확인 필요</span></li><li>프로젝트 이름 입력(예: <code>classroom-test-이니셜</code>, <strong>실명은 넣지 않는다</strong>) → 약관 확인 → 계속<ul><li>프로젝트 ID는 <code>PROJECT_ID.web.app</code> 같은 공개 주소에 드러나고 영문 소문자·숫자·하이픈만 쓴다.</li></ul></li><li>Gemini in Firebase, Google Analytics 단계가 나오면 연수에서는 <strong>끄거나 기본값</strong> <span class="chk" title="화면 순서">확인 필요</span> (Analytics는 끄기 권장, 작성자 판단). Gemini를 켜더라도 <strong>Gemini API 키는 절대 코드에 넣지 않는다</strong>(17번)</li><li><strong>프로젝트 만들기(Create project)</strong> 클릭 → 프로젝트 개요 화면이 뜨면 성공</li></ol></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:10.5%"></b></i></span><span class="ft-num"><b>16</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 16 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 3분</div><p>프로젝트는 Authentication, Firestore 같은 서비스와 그 설정, 등록된 앱을 묶는 최상위 단위다. 사실표 1절 기준. 프로젝트 생성은 Spark(무료)로 시작한다. 이미 만든 프로젝트에 기능만 추가할 때는 새 프로젝트를 만들지 않는다(사실표 1절). 사실표는 9단계였으나 5단계로 압축했다(웹 앱 등록은 17번으로 이동). 버튼 문구와 Gemini/Analytics 화면 순서는 사실표 11절 1번에 따라 <span class="chk" title="원고에 [확인필요]로 남은 항목">확인 필요</span>. 연수 후에 이 프로젝트를 삭제하는 방법은 33번에서 안내한다. 예시 이름에 실명을 넣지 않는 이유: 프로젝트 ID가 공개 주소에 드러난다(검수 7-D). Gemini in Firebase를 켜는 선택지가 나오므로 "Gemini 같은 AI 서비스 키는 비밀"이라는 점을 17번과 연결해 한 줄 말한다. (3분)</p><div class="nx"><b>도식 설명(강사용)</b> <code>.steps</code> 5단계</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>정확한 버튼 문구</li><li>화면 순서</li><li>학교 계정에서 생성이 막히는지</li></ul></div><div class="nx"><b>막힐 때</b><ul><li>프로젝트 만들기가 막히거나 권한 오류 → 학교 관리(Workspace) 계정일 수 있다. 개인 구글 계정으로 다시 로그인 <span class="chk" title="학교 계정에서 생성이 막히는지">확인 필요</span>.</li><li>버튼 문구가 다르면 화면의 "프로젝트 추가/만들기"에 해당하는 버튼을 고른다. 강사 화면과 짝 화면을 본다.</li></ul></div></div></section>
+
+<section class="slide k-실습" id="s17" data-n="17" data-kind="실습" data-min="2" data-module="M3" data-track="fb" data-fsmax="26"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-실습">실습</span><span class="tag">참가자 실습</span><span class="tag">Spark</span><span class="tag">콘솔 직접 조작</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">공통 설정 2: 웹 앱 등록과 firebaseConfig</h2><div class="body stack con51 ovc"><div class="vis"><svg class="dg " viewBox="0 0 1152 150" role="img" aria-label="Firebase 프로젝트 안에 웹 앱을 등록하면 firebaseConfig가 나온다. 공개해도 되는 값과 비공개 자격증명의 구분"><rect x="0" y="30" width="560" height="116" rx="6" class="n2"/><text x="16" y="14" font-size="20" text-anchor="start" dominant-baseline="central" class="t2 b">Firebase 프로젝트</text><rect x="20" y="50" width="230" height="80" rx="6" class="n"/><text x="135" y="75.5" font-size="22" text-anchor="middle" dominant-baseline="central" class="b">웹 앱 등록</text><text x="135" y="105.75" font-size="20" text-anchor="middle" dominant-baseline="central" class="t3">웹 앱 구성 생성</text><path d="M256 90 L300 90" class="ln" marker-end="url(#ah-ink)"/><rect x="306" y="50" width="236" height="80" rx="6" class="nteal"/><text x="424" y="75.5" font-size="22" text-anchor="middle" dominant-baseline="central" class="mono b">firebaseConfig</text><text x="424" y="105.75" font-size="20" text-anchor="middle" dominant-baseline="central" class="tteal m">apiKey 포함 · 프로젝트 식별</text><rect x="306" y="0" width="236" height="32" rx="4" class="fteal"/><text x="424" y="16" font-size="20" text-anchor="middle" dominant-baseline="central" class="tw b">공개해도 OK</text><line x1="600" y1="20" x2="600" y2="146" class="rule"/><rect x="640" y="30" width="512" height="116" rx="6" class="naw"/><rect x="640" y="0" width="512" height="32" rx="4" class="fa"/><text x="896" y="16" font-size="20" text-anchor="middle" dominant-baseline="central" class="tw b">절대 공개 금지 · 서버 측 자격증명</text><text x="660" y="72" font-size="22" text-anchor="start" dominant-baseline="central" class="b">서비스 계정 키(JSON)</text><text x="660" y="110" font-size="21" text-anchor="start" dominant-baseline="central" class="m">AI 서비스 키(Gemini 등) · 외부 서비스 비밀 키</text></svg></div><div class="row2"><div class="col ovc"><ul><li>웹 앱 등록 = 프로젝트에 웹 앱 구성(firebaseConfig)을 생성하는 일.</li><li><strong>firebaseConfig(안에 든 apiKey 포함) = 클라이언트가 프로젝트를 식별하는 설정값. 공개되어도 된다. 접근 통제는 Claude Code가 만드는 보안 규칙이 맡는다.</strong></li><li><strong>AI 서비스 키(Gemini 등)·서비스 계정 키 = 서버 측 자격증명. 저장소·클라이언트 코드에 노출하면 안 된다.</strong> (서비스 계정 키 = 서버가 관리자 권한으로 접속할 때 쓰는 자격증명 파일, JSON)</li></ul></div><div class="col csteps ovc"><ol><li>프로젝트 개요 페이지에서 <strong>웹 아이콘(<code>&lt;/&gt;</code>)</strong> 클릭</li><li><strong>앱 닉네임</strong> 입력(내부 구분용 이름일 뿐)</li><li><strong>앱 등록(Register app)</strong> 클릭</li><li>화면에 나오는 <code>firebaseConfig</code>를 <strong>눈으로 확인</strong>만 한다(복사해서 붙일 앱은 만들지 않는다)</li></ol></div></div></div><div class="band  n2"><div class="cell res ovc"><div class="lbl l-res">예상 결과</div><div class="cb"><p><code>firebaseConfig</code> 코드 블록이 화면에 보인다. 항목은 apiKey, authDomain, projectId 등이다 <span class="chk" title="항목 전체 목록은 문서 본문에서 미확인, 일반적으로 알려진 형태">확인 필요</span>.</p></div></div><div class="cell stk ovc"><div class="lbl l-stk">막힐 때</div><div class="cb"><ul><li>웹 아이콘이 안 보임 → 프로젝트 개요 페이지로 돌아가 "앱 추가" 영역을 찾는다 <span class="chk" title="화면 위치">확인 필요</span>.</li><li>"설정값을 숨겨야 하나?" → 숨기지 않아도 된다. 접근 통제는 Claude Code가 만드는 보안 규칙이 맡는다.</li></ul></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:15.8%"></b></i></span><span class="ft-num"><b>17</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 17 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 2분</div><p>공개 가능 근거는 공식 문서(https://firebase.google.com/docs/projects/api-keys, 검수 확인): 키는 프로젝트와 앱을 <strong>식별</strong>할 뿐 <strong>권한 부여</strong>는 하지 않는다. <strong>안전한 조건: 그 키가 Firebase 서비스로만 제한되어 있어야 하고, 허용 목록에 Generative Language API(Gemini)가 없어야 한다.</strong> 그래서 Gemini API 키는 절대 코드에 넣지 않는다. 서비스 계정 키·AI 서비스 키도 코드·HTML·깃에 넣지 않는다. 참가자는 화면에서 <code>apiKey</code>라는 글자를 직접 보므로, "API 키는 모두 비밀"이라고 말하지 않는다(구분: firebaseConfig = 프로젝트 식별 설정값, AI 서비스 키·서비스 계정 키 = 서버 측 자격증명). 흔한 오류: 설정값을 비밀로 오해해 숨기다 앱이 안 돌아가는 것. 접근 규칙의 내용은 이 연수에서 설명하지 않고 Claude Code가 만든다. 이 단계는 앱을 만드는 것이 아니라 "접속 정보가 어떻게 생겼는지 보는" 단계다. (2분)</p><div class="nx"><b>도식 설명(강사용)</b> <code>.steps</code> 4단계 + 오른쪽에 2칸 비교 카드</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>항목 전체 목록은 문서 본문에서 미확인, 일반적으로 알려진 형태</li><li>화면 위치</li></ul></div><div class="nx"><b>막힐 때</b><ul><li>웹 아이콘이 안 보임 → 프로젝트 개요 페이지로 돌아가 "앱 추가" 영역을 찾는다 <span class="chk" title="화면 위치">확인 필요</span>.</li><li>"설정값을 숨겨야 하나?" → 숨기지 않아도 된다. 접근 통제는 Claude Code가 만드는 보안 규칙이 맡는다.</li></ul></div></div></section>
+
+<section class="slide k-개념" id="s18" data-n="18" data-kind="개념" data-min="1" data-module="M3" data-track="fb" data-fsmax="30"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-개념">개념</span></span></header><h2 class="title">Authentication 사용 상황: 사용자 인증과 uid</h2><div class="body stack ovc"><div class="lead"><p>Authentication = 사용자 인증 서비스. 로그인 공급자(예: 구글 계정)로 사용자를 확인하고 고유 식별자(uid)를 발급한다.</p></div><div class="vis"><svg class="dg " viewBox="0 0 1152 110" role="img" aria-label="학생이 구글 계정으로 로그인하면 Authentication이 사용자를 인증하고 고유 번호 uid를 발급한다"><circle cx="169.11" cy="42.5" r="11.25" class="fi3"/><path class="fi3" d="M149.11 85 q20 -42.5 40 0 v0 h-40 z"/><text x="169.11" y="104" font-size="20" text-anchor="middle" dominant-baseline="central" class="t2 m">학생</text><path d="M197.11 56 H241.11" class="ln" marker-end="url(#ah-ink)"/><rect x="249.11" y="18" width="197.56" height="76" rx="6" class="n"/><text x="347.89" y="56" font-size="22" text-anchor="middle" dominant-baseline="central" class="m">구글 계정 로그인</text><path d="M452.67 56 L510.67 56" class="ln" marker-end="url(#ah-ink)"/><rect x="516.67" y="18" width="215.82" height="76" rx="6" class="noch"/><text x="624.58" y="42.25" font-size="22" text-anchor="middle" dominant-baseline="central" class="m">사용자 인증</text><text x="624.58" y="69.75" font-size="22" text-anchor="middle" dominant-baseline="central" class="m">Authentication</text><path d="M738.49 56 L796.49 56" class="ln" marker-end="url(#ah-ink)"/><rect x="802.49" y="18" width="180.4" height="76" rx="6" class="nk"/><text x="892.69" y="56" font-size="22" text-anchor="middle" dominant-baseline="central" class="tw b">고유 번호(uid)</text></svg></div><div class="cards c3 use"><div class="card good"><div class="ey">쓰는 상황 1</div><p>내 학생만 들어오게</p></div><div class="card good"><div class="ey">쓰는 상황 2</div><p>학생마다 자기 기록만 보기</p></div><div class="card mute"><div class="ey">안 쓰는 상황</div><p>누구나 보는 공지 페이지</p></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:21.1%"></b></i></span><span class="ft-num"><b>18</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 18 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p>사실표 2절. 쓰는 상황은 "학생·교사별로 보이는 화면과 권한을 나눌 때", "학생 제출물을 본인 것으로 저장할 때". 안 쓰는 상황은 "로그인이 필요 없는 공개 안내 페이지". 클래스룸 예시에서는 구글 로그인으로 교사/학생을 구분한다(예시일 뿐). 요금 참고: 기본 인증은 월간 활성 사용자 5만 명까지 무료(Spark·Blaze 동일, 사실표 2절). 이 로그인으로 받은 uid가 사용자를 구분하는 기준이 되며, 구분에 따른 접근 조건은 Claude Code가 만든다고 예고만 한다. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> 3칸. <code>쓰는 상황 1</code> / <code>쓰는 상황 2</code> / <code>안 쓰는 상황</code>(회색 카드). 가운데에 사용자 → Authentication(로그인 공급자 확인) → uid 발급.</div></div></section>
+
+<section class="slide k-실습" id="s19" data-n="19" data-kind="실습" data-min="3" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-실습">실습</span><span class="tag">참가자 실습</span><span class="tag">Spark</span><span class="tag">콘솔 직접 조작</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">Authentication 설정 절차: Google 로그인 켜기</h2><div class="body prac console ovc"><div class="col ovc"><ul><li>콘솔에서 Google 로그인 방법을 켠다.</li><li>마지막에 <strong>승인된 도메인</strong> 목록을 눈으로 확인한다.</li></ul><div class="resbox mov"><div class="lbl l-res">예상 결과</div><p>로그인 방법 목록에서 <strong>Google</strong>이 "사용 설정됨"으로 표시된다.</p></div><div class="stkbox mov"><div class="lbl l-stk">막힐 때</div><ul><li>메뉴를 못 찾음 → 왼쪽 메뉴 그룹 이름이 보안(Security)인지 확인한다. 영문 UI면 Build/Security 그룹을 연다 <span class="chk" title="원고에 [확인필요]로 남은 항목">확인 필요</span>.</li><li>나중에 앱에서 <code>auth/unauthorized-domain</code> 오류 → 지금 접속한 주소가 승인된 도메인 목록에 없다는 뜻이다. 목록에 추가한다(사실표 2절).</li></ul></div></div><div class="col main ovc"><div class="grp diag csteps"><ol><li>콘솔 왼쪽 메뉴 <strong>보안(Security) &gt; Authentication</strong> (영문 UI 기준 문서 표기, 검수 확인) <span class="chk" title="한국어 UI 번역명">확인 필요</span></li><li><strong>시작하기(Get started)</strong> → <strong>로그인 방법(Sign-in method)</strong> 탭 <span class="chk" title="시작하기 버튼 문구">확인 필요</span></li><li><strong>Google</strong> 공급자 선택 → <strong>사용 설정</strong></li><li><strong>프로젝트 지원 이메일</strong> 선택 → <strong>저장</strong> <span class="chk" title="지원 이메일 항목은 문서 본문 미확인">확인 필요</span></li><li><strong>Settings 탭 &gt; 승인된 도메인(Authorized domains)</strong> 목록을 눈으로 확인한다. 2025-04-28 이후 만든 프로젝트는 기본 목록에 localhost가 없다. M3에서는 추가하지 않는다. 배포 주소에서 로그인 오류가 나면 그때 승인된 도메인을 확인한다. <span class="chk" title="Hosting 기본 주소의 기본 포함 여부">확인 필요</span></li></ol></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:26.3%"></b></i></span><span class="ft-num"><b>19</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 19 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 3분</div><p>사실표 2절. 승인된 도메인은 "로그인 팝업을 허용하는 사이트 주소 목록"이다. 개발 중 도메인은 자동 추가되나 직접 연결한 도메인은 추가해야 한다. <strong>검수 확인(Auth FAQ, 이메일 링크 문서):</strong> "2025-04-28 이후 만든 프로젝트의 승인된 도메인 기본값에는 localhost가 없고, Settings 탭의 Authorized Domains에서 추가한다." Google은 운영 프로젝트에 localhost를 쓰지 말라고 권한다. M3에서는 추가하지 않는다. 배포 주소에서 로그인 오류가 나면 그때 승인된 도메인을 확인한다. 이미 localhost가 있으면 운영 때 지우도록 권장한다. 로그인 방법 탭·Google 사용 설정은 google-signin 문서로 확인됨. 코드 예시(<code>signInWithPopup</code>)는 이 연수에서 쓰지 않는다. 앱을 만들지 않기 때문이다. 지금은 Google 로그인을 사용 설정하는 데까지만 한다. 초보 실습에서는 <code>signInWithRedirect</code>보다 <code>signInWithPopup</code>이 안전하다는 점은 사실표 2절의 참고 사항(심화). (3분)</p><div class="nx"><b>도식 설명(강사용)</b> <code>.steps</code> 5단계</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>한국어 UI 번역명</li><li>시작하기 버튼 문구</li><li>지원 이메일 항목은 문서 본문 미확인</li><li>Hosting 기본 주소의 기본 포함 여부</li><li>상세 없음</li></ul></div><div class="nx"><b>막힐 때</b><ul><li>메뉴를 못 찾음 → 왼쪽 메뉴 그룹 이름이 보안(Security)인지 확인한다. 영문 UI면 Build/Security 그룹을 연다 <span class="chk" title="원고에 [확인필요]로 남은 항목">확인 필요</span>.</li><li>나중에 앱에서 <code>auth/unauthorized-domain</code> 오류 → 지금 접속한 주소가 승인된 도메인 목록에 없다는 뜻이다. 목록에 추가한다(사실표 2절).</li></ul></div></div></section>
+
+<section class="slide k-개념" id="s20" data-n="20" data-kind="개념" data-min="1" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-개념">개념</span></span></header><h2 class="title">Firestore 사용 상황: 문서 지향 NoSQL 데이터베이스</h2><div class="body split r46 ovc"><div class="col ovc"><p class="def">Firestore = 문서 지향 NoSQL 데이터베이스. <strong>데이터는 컬렉션 안의 문서에 저장하고, 문서는 필드(키-값)로 이루어진다.</strong></p><div class="uk use"><span>쓴다</span><p>수업·학습지·제출물 저장</p><p>교사가 올린 자료를 학생이 실시간으로 보기</p></div><div class="uk nouse"><span>안 쓴다</span><p>큰 파일(영상·큰 이미지) → Storage가 맞다. 단 Storage는 Blaze 필요.</p></div></div><div class="col vis ovc"><svg class="dg " viewBox="0 0 640 420" role="img" aria-label="Firestore 데이터 구조: 컬렉션 안에 문서, 문서 안에 필드"><rect x="20" y="120" width="330" height="290" rx="4" class="n2"/><rect x="20" y="120" width="330" height="290" rx="4" fill="none" stroke="var(--ink-3)" stroke-width="2"/><rect x="0" y="60" width="370" height="130" rx="4" class="n"/><rect x="0" y="60" width="370" height="130" rx="4" fill="none" stroke="var(--ochre)" stroke-width="2"/><path d="M40 66 v-50 h22 l8 -10 h40 v60 z" class="noch"/><line x1="50" y1="26" x2="98" y2="26" stroke="var(--ochre)" stroke-width="2"/><line x1="50" y1="38" x2="98" y2="38" stroke="var(--ochre)" stroke-width="2"/><line x1="50" y1="50" x2="98" y2="50" stroke="var(--ochre)" stroke-width="2"/><path d="M150 66 v-50 h22 l8 -10 h40 v60 z" class="noch"/><line x1="160" y1="26" x2="208" y2="26" stroke="var(--ochre)" stroke-width="2"/><line x1="160" y1="38" x2="208" y2="38" stroke="var(--ochre)" stroke-width="2"/><line x1="160" y1="50" x2="208" y2="50" stroke="var(--ochre)" stroke-width="2"/><path d="M260 66 v-50 h22 l8 -10 h40 v60 z" class="noch"/><line x1="270" y1="26" x2="318" y2="26" stroke="var(--ochre)" stroke-width="2"/><line x1="270" y1="38" x2="318" y2="38" stroke="var(--ochre)" stroke-width="2"/><line x1="270" y1="50" x2="318" y2="50" stroke="var(--ochre)" stroke-width="2"/><rect x="110" y="116" width="150" height="46" rx="3" class="nk"/><text x="185" y="139" font-size="20" text-anchor="middle" dominant-baseline="central" class="tp b mono">users/{uid}</text><rect x="40" y="230" width="290" height="120" rx="4" class="n"/><rect x="80" y="270" width="210" height="46" rx="3" class="nk"/><text x="185" y="293" font-size="20" text-anchor="middle" dominant-baseline="central" class="tp b mono">classes/{classId}</text><rect x="160" y="330" width="50" height="10" rx="3" class="fi3"/><path d="M372 40 L432 30" class="ln mute"/><text x="442" y="17" font-size="22" text-anchor="start" dominant-baseline="central" class="b">필드</text><text x="442" y="45" font-size="21" text-anchor="start" dominant-baseline="central" class="to m">= 문서의 키·값</text><path d="M372 110 L432 110" class="ln mute"/><text x="442" y="97" font-size="22" text-anchor="start" dominant-baseline="central" class="b">문서</text><text x="442" y="125" font-size="21" text-anchor="start" dominant-baseline="central" class="to m">= 필드의 묶음</text><path d="M352 190 L432 200" class="ln mute"/><text x="442" y="187" font-size="22" text-anchor="start" dominant-baseline="central" class="b">컬렉션</text><text x="442" y="215" font-size="21" text-anchor="start" dominant-baseline="central" class="to m">= 문서의 묶음</text></svg></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:31.6%"></b></i></span><span class="ft-num"><b>20</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 20 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p>사실표 3절. 한 줄 정의는 "문서를 컬렉션에 담아 저장하는 실시간 클라우드 데이터베이스". 용량 한도: 문서 1개 최대 1MiB(검수 확인: quotas 문서 "Maximum size for a document 1 MiB (1,048,576 bytes)"). MiB·GiB는 저장 용량 단위(1MiB는 약 1MB)라고 한 줄 덧붙인다. 짧은 글(문항·답안·HTML 문자열)은 Firestore 문서에 두면 결제 수단 없이 가능하다(사실표 5·9절). 요금 참고: Standard Edition 무료 한도 1GiB 저장, 하루 읽기 5만, 쓰기 2만(Spark). 컬렉션 그룹 쿼리·복합 색인은 심화이므로 여기서는 이름만 언급하고 넘어간다(필요하면 사실표 3절 "색인" 참고). (1분)</p><div class="nx"><b>도식 설명(강사용)</b> 컬렉션-문서-필드 계층도 하나. 컬렉션 2개 <code>users/{uid}</code>, <code>classes/{classId}</code> 아래에 문서와 필드. (예시 경로는 이 두 개만. 클래스룸 예시 소재)</div></div></section>
+
+<section class="slide k-실습" id="s21" data-n="21" data-kind="실습" data-min="3" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-실습">실습</span><span class="tag">참가자 실습</span><span class="tag">Spark</span><span class="tag">콘솔 직접 조작</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">Firestore 설정 절차: 데이터베이스 만들기</h2><div class="body prac console ovc"><div class="col ovc"><ul><li>데이터베이스를 만들 때 <strong>프로덕션(잠금) 모드</strong>로 시작한다.</li><li>프로덕션 모드는 처음에 모든 접근을 막고, 접근 조건은 Claude Code가 규칙 파일로 만들어 배포한다.</li><li>테스트 모드는 누구나 읽기·쓰기가 되는 기한이 정해진 임시 설정이라 쓰지 않는다.</li></ul><div class="resbox mov"><div class="lbl l-res">예상 결과</div><p>Firestore 데이터 화면이 열린다. 데이터는 비어 있다.</p></div><div class="stkbox mov"><div class="lbl l-stk">막힐 때</div><ul><li>위치를 고를 수 없음 → 프로젝트 기본 Google Cloud 리소스 위치가 이미 정해진 경우다(사실표 3절). 그대로 진행한다.</li><li>나중에 <code>Missing or insufficient permissions</code> → 프로덕션 모드는 처음에 전부 거부한다. 정상이다. 접근 조건은 Claude Code가 규칙 파일로 만들어 배포한다.</li></ul></div></div><div class="col main ovc"><div class="grp diag csteps"><ol><li>프로젝트 선택 → 왼쪽 패널 <strong>Databases &amp; Storage &gt; Firestore</strong> (영문 UI 기준, 검수 확인) <span class="chk" title="한국어 UI 번역명">확인 필요</span></li><li><strong>Create database(데이터베이스 만들기)</strong> 클릭</li><li>에디션 선택 화면이 나오면 <strong>Standard</strong> 선택. 에디션 = 데이터베이스 종류, 기본형을 고른다. <span class="chk" title="에디션 선택 화면 유무와 화면 순서">확인 필요</span></li><li><strong>위치(location)</strong> 선택. 서울(asia-northeast3)을 고를 수 있다. <strong>위치는 만든 뒤 바꿀 수 없으므로 신중히 고른다.</strong></li><li>보안 모드 <strong>프로덕션 모드</strong> 선택 → <strong>Create(만들기)</strong></li></ol><table><thead><tr><th>구분</th><th>테스트 모드</th><th>프로덕션 모드</th></tr></thead><tbody><tr><td>접근</td><td>누구나 읽기·쓰기 허용</td><td>클라이언트(웹/앱) 접근 전부 거부(Denies all reads and writes)</td></tr><tr><td>기간</td><td>기한이 정해진 임시 설정 <span class="chk" title="30일 만료">확인 필요</span></td><td>만료 없음</td></tr></tbody></table></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:36.8%"></b></i></span><span class="ft-num"><b>21</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 21 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 3분</div><p>사실표 3절. <strong>프로덕션 모드 권장은 사실표의 작성자 의견</strong>이다. 테스트 모드는 "연수 첫 체험용으로만, 학생 정보가 들어가면 위험". 테스트 모드의 30일 만료는 현재 quickstart 문서에서 문장을 찾지 못해 "기한이 정해진 임시 설정"으로 말하고 <span class="chk" title="원고에 [확인필요]로 남은 항목">확인 필요</span>로 둔다(검수 5절). 확인된 것: 프로덕션 모드는 "Denies all reads and writes from mobile and web clients"(quickstart), 위치는 "once you provision a database instance, you cannot change its location"(locations 문서), 서울(asia-northeast3)은 locations 목록에 있다. Cloud Firestore API는 만들 때 자동 사용 설정된다. 규칙 문법은 이 연수에서 다루지 않는다. 이 단계에서 데이터를 넣거나 앱을 연결하지 않는다. (3분)</p><div class="nx"><b>도식 설명(강사용)</b> <code>.steps</code> 5단계 + 아래 비교 표(2열)</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>한국어 UI 번역명</li><li>에디션 선택 화면 유무와 화면 순서</li><li>30일 만료</li></ul></div><div class="nx"><b>막힐 때</b><ul><li>위치를 고를 수 없음 → 프로젝트 기본 Google Cloud 리소스 위치가 이미 정해진 경우다(사실표 3절). 그대로 진행한다.</li><li>나중에 <code>Missing or insufficient permissions</code> → 프로덕션 모드는 처음에 전부 거부한다. 정상이다. 접근 조건은 Claude Code가 규칙 파일로 만들어 배포한다.</li></ul></div></div></section>
+
+<section class="slide k-개념" id="s22" data-n="22" data-kind="개념" data-min="1" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-개념">개념</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">요금제 사용 상황: Spark와 Blaze</h2><div class="body split r30 ovc"><div class="col ovc"><ul><li><strong>Spark = 무료 요금제</strong>(무료 사용량 한도 안에서만 사용). <strong>Blaze = 종량제 요금제</strong>(무료 한도 안은 무료, 넘으면 사용량만큼 청구, 결제 수단 등록 필수).</li><li>Blaze 필요: Cloud Functions 배포, Cloud Storage(2026-02-03부터)</li><li>용어: MAU = 월간 활성 사용자 수 / GiB = 저장 용량 단위 / GB-초 = 함수 실행 시간 × 메모리</li></ul></div><div class="col vis ovc"><div class="plans"><div class="pl spark"><b>Spark</b><span>무료 요금제</span><small>무료 한도 안에서만</small></div><div class="pl blaze"><b>Blaze</b><span>종량제 요금제</span><small>한도 안은 무료, 넘으면 청구</small></div></div><div class="ptbl"><table><thead><tr><th>기능</th><th>Spark</th><th>Blaze</th></tr></thead><tbody><tr><td>Authentication(기본)</td><td>월 5만 MAU</td><td>동일</td></tr><tr><td>Firestore Standard</td><td>1GiB, 읽기 5만/일, 쓰기 2만/일</td><td>동일 무료 한도 후 종량</td></tr><tr><td>Hosting</td><td>10GB 저장, 360MB/일 전송</td><td>동일 무료 한도</td></tr><tr><td>Storage</td><td class="na">사용 불가</td><td>5GB 저장 등 표기</td></tr><tr><td>Functions</td><td class="na">사용 불가</td><td>월 200만 호출, 40만 GB-초</td></tr></tbody></table></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:42.1%"></b></i></span><span class="ft-num"><b>22</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 22 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p>사실표 8절. 공식 이름: "No-cost (Spark plan)", "Pay as you go (Blaze plan)". 기본 Authentication, Firestore, Hosting은 Spark에서 사용 가능. Blaze가 필요한 것: Cloud Functions(배포), Cloud Storage(2026-02-03부터). Storage는 Spark에서 기존 버킷 포함 읽기/쓰기 접근을 잃고 새 기본 버킷도 Blaze에서만 생성 가능하다. <strong>충돌 없음(검수 확인)</strong>: pricing 페이지 Spark의 Cloud Storage가 "Not applicable"로 바뀌었고, FAQ의 Blaze 요건은 2026-02-03 시행이며 미업그레이드 시 데이터는 남지만 접근할 수 없다. 무료 사용량·한도(Auth 5만 MAU, Firestore 1GiB·읽기 5만·쓰기 2만, Hosting 10GB·360MB/일, Functions Spark 불가)는 pricing 페이지로 확인됨. 무료 사용량 수치는 문서 표기이며 바뀔 수 있으므로 연수 당일 pricing 페이지(https://firebase.google.com/pricing)로 다시 확인한다. Blaze여도 무료 사용량 안에서는 비용이 0일 수 있으나 <strong>결제 수단 등록은 필수</strong>다. 신규 사용자에게 $300 체험 크레딧이 적용되는지는 <span class="chk" title="원고에 [확인필요]로 남은 항목">확인 필요</span>. 그래서 이 연수는 Spark로 완성되는 항목(Auth·Firestore)만 참가자 실습으로 두었다. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> 2열 비교 표(문서 표기)</div></div></section>
+
+<section class="slide k-개념" id="s23" data-n="23" data-kind="개념" data-min="1" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-개념">개념</span><span class="tag">강사 시연</span><span class="tag">심화 선택</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">요금제 설정 절차: 예산 알림 (강사 시연)</h2><div class="body prac console ovc"><div class="col ovc"><ul><li><strong>예산 알림은 알림일 뿐, 사용을 멈추지 않는다.</strong></li><li>요금제 변경과 결제는 <strong>사람이 직접 확인한다.</strong> 연수에서는 결제 수단을 등록하지 않는다.</li></ul></div><div class="col main ovc"><div class="grp diag csteps"><ol><li>콘솔 <strong>설정(Settings) &gt; Usage and billing(사용량 및 결제)</strong> 에서 결제·사용량 확인 <span class="chk" title="한국어 메뉴명">확인 필요</span></li><li>Blaze 업그레이드 시 <strong>알림 전용 예산(Alerts-only budget)</strong>이 자동으로 제안된다 (이 연수에서는 업그레이드를 시연하지 않고 화면 캡처로 보여 준다)</li><li>금액과 알림 임계값(예: 50%, 90%, 100%)을 정하면 이메일 발송 <span class="chk" title="임계값 기본값">확인 필요</span></li></ol><ul><li>예산 유형: <strong>알림 전용</strong>(이메일만, 서비스 계속) / <strong>지출 한도(Spend cap)</strong>(Firebase AI Logic, App Hosting, Cloud Functions, Extensions 한정, 100% 도달 시 그 달 남은 기간 중지)</li></ul></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:47.4%"></b></i></span><span class="ft-num"><b>23</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 23 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p><strong>강사 시연이므로 참가자는 따라 하지 않는다.</strong> 사실표 8절 핵심 문구(공식): "Budget alerts do <strong>not</strong> pause services." Firestore·Storage·Hosting에는 지출 한도를 걸 수 없다(문서에 나열된 제품에 미포함). 제품별 사용량 대시보드가 있다. 실험 코드로 인한 뜻밖의 비용은 Local Emulator Suite로 피할 수 있다(Functions, Firestore, Realtime Database 대상). 연수 운영 권고(사실표의 작성자 의견): 참가자 개인 계정에 결제 수단 등록이 부담되므로 Blaze 단계는 시연으로 분리했다. 설정 위치와 한국어 메뉴명은 리허설 때 실화면으로 대조한다. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> <code>.steps</code> 3단계(심화 선택 박스)</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>한국어 메뉴명</li><li>임계값 기본값</li></ul></div></div></section>
+
+<section class="slide k-개념" id="s24" data-n="24" data-kind="개념" data-min="1" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-개념">개념</span></span></header><h2 class="title">Storage 사용 상황: 파일(객체) 저장</h2><div class="body split r46 ovc"><div class="col ovc"><p class="def">Storage = 파일(객체) 저장 서비스. 이미지·PDF·영상 같은 <strong>파일</strong>을 저장한다.</p><div class="uk use"><span>쓴다</span><p>교사가 PDF·이미지·영상 자료 업로드</p><p>학생이 사진 과제 제출</p></div><div class="uk nouse"><span>안 쓴다</span><p>짧은 글·HTML 텍스트 → Firestore (문서 한도 1MiB)</p></div></div><div class="col vis ovc"><svg class="dg " viewBox="0 0 640 400" role="img" aria-label="큰 파일은 Storage(객체 저장), 짧은 글은 Firestore(문서 DB)로"><rect x="0" y="40" width="220" height="84" rx="6" class="n"/><text x="110" y="68.25" font-size="22" text-anchor="middle" dominant-baseline="central" class="b">이미지·PDF·영상</text><text x="110" y="95.75" font-size="22" text-anchor="middle" dominant-baseline="central" class="b">같은 파일</text><rect x="0" y="250" width="220" height="84" rx="6" class="n"/><text x="110" y="278.25" font-size="22" text-anchor="middle" dominant-baseline="central" class="b">짧은 글·</text><text x="110" y="305.75" font-size="22" text-anchor="middle" dominant-baseline="central" class="b">HTML 텍스트</text><path d="M226 82 L330 82" class="ln acc thick" marker-end="url(#ah-acc)"/><path d="M226 292 L350 292" class="ln teal thick" marker-end="url(#ah-teal)"/><text x="288" y="272" font-size="20" text-anchor="middle" dominant-baseline="central" class="t3 m">문서 한도 1MiB</text><path d="M340 60 L470 10 L600 60 V170 H340 Z" class="naw"/><rect x="440" y="110" width="60" height="60" rx="2" class="n"/><text x="470" y="76" font-size="22" text-anchor="middle" dominant-baseline="central" class="ta b">파일 저장</text><text x="470" y="196" font-size="22" text-anchor="middle" dominant-baseline="central" class="b mono">Storage</text><rect x="520" y="0" width="120" height="32" rx="16" class="na"/><text x="580" y="16" font-size="20" text-anchor="middle" dominant-baseline="central" class="tw b">Blaze 필요</text><rect x="360" y="236" width="220" height="120" rx="4" class="nteal"/><rect x="380" y="250" width="180" height="40" rx="3" class="n"/><rect x="450" y="266" width="40" height="8" rx="2" class="fteal"/><rect x="380" y="302" width="180" height="40" rx="3" class="n"/><rect x="450" y="318" width="40" height="8" rx="2" class="fteal"/><text x="470" y="380" font-size="22" text-anchor="middle" dominant-baseline="central" class="tteal b">문서 저장 · Firestore</text></svg></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:52.6%"></b></i></span><span class="ft-num"><b>24</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 24 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p>사실표 5절. <strong>현재 요건: Storage 사용에는 Blaze 필요, 2026-02-03부터 적용</strong>(검수 확인: Storage FAQ). 문서 1MiB 한도는 quotas 문서로 확인됨. 그래서 이번 클래스룸 예시는 HTML을 Firestore 문서에 저장하는 방식을 우선 권장한다(결제 수단 불필요). 학생 사진은 개인정보이므로 연수에서는 올리지 않는다(25번 질문과 연결). 설계서에 적힌 "2024-10-30 이후 정책"은 사실표에서 확인되지 않았고 사실표는 2026-02-03 요건을 최신으로 본다. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> Storage(파일 저장)와 Firestore(문서 저장) 두 박스. 큰 파일은 Storage로, 짧은 글은 Firestore로 화살표. Storage에 <code>Blaze 필요</code> 표식.</div></div></section>
+
+<section class="slide k-점검" id="s25" data-n="25" data-kind="점검" data-min="1" data-module="M3" data-track="fb" data-fsmax="34"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-점검">점검</span><span class="tag">참가자 질문</span></span></header><h2 class="title">질문: Firestore냐, Storage냐, 올리지 않을까</h2><div class="body quest ovc has-side"><div class="col q-main ovc"><div class="qmark" aria-hidden="true">?</div><ul><li>짝과 1분 이야기 → Firestore / Storage / 올리지 않음</li></ul></div><div class="col q-side ovc"><div class="qgrid"><div class="qc"><div class="qq">학습지 문항은?</div><div class="qo"><span><i class="box"></i>Firestore</span><span><i class="box"></i>Storage</span><span><i class="box"></i>올리지 않음</span></div></div><div class="qc"><div class="qq">수업 동영상은?</div><div class="qo"><span><i class="box"></i>Firestore</span><span><i class="box"></i>Storage</span><span><i class="box"></i>올리지 않음</span></div></div><div class="qc"><div class="qq">학생 사진은?</div><div class="qo"><span><i class="box"></i>Firestore</span><span><i class="box"></i>Storage</span><span><i class="box"></i>올리지 않음</span></div></div></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:57.9%"></b></i></span><span class="ft-num"><b>25</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 25 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p>모범 답안. 학습지 문항 = 짧은 글이므로 <strong>Firestore</strong>. 수업 동영상 = 큰 파일이므로 <strong>Storage</strong>(Blaze 필요). 학생 사진 = <strong>개인정보이므로 올리지 않는다</strong>(연수에서는 실제 학생 정보 금지, 실제 운영 시에도 학교 방침·동의가 먼저). 정답 맞히기가 목적이 아니라 "짧은 글은 Firestore, 파일은 Storage, 개인정보는 일단 멈춘다"를 판단하는 연습이다. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> 3개 질문 카드 × 3개 답 선택지(Firestore · Storage · 올리지 않음)</div></div></section>
+
+<section class="slide k-개념" id="s26" data-n="26" data-kind="개념" data-min="1" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-개념">개념</span><span class="tag">강사 시연</span><span class="tag">심화 선택</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">Storage 설정 절차 (강사 시연)</h2><div class="body prac console ovc"><div class="col ovc"><ul><li>메뉴 → 시작하기 → 요금제 조건 → 위치 → 접근 규칙 확인.</li><li>접근 규칙은 Claude Code가 만든 규칙 파일을 쓴다. 배포 여부는 Claude Code에게 확인시킨다.</li></ul></div><div class="col main ovc"><div class="grp diag csteps"><ol><li>콘솔 <strong>Databases &amp; Storage &gt; Storage</strong> <span class="chk" title="한국어 UI 번역명">확인 필요</span></li><li><strong>Get started(시작하기)</strong> 클릭. Blaze 업그레이드 요구 화면이 먼저 나올 수 있다 <span class="chk" title="업그레이드 화면 흐름">확인 필요</span></li><li>버킷 <strong>위치</strong> 선택</li><li>접근 규칙(Claude Code가 만든 규칙 파일)이 배포되었는지 Claude Code에게 확인시킨다. 개발용 공개 접근 옵션이 있으나 <strong>학생 파일에는 쓰지 않는다</strong></li><li>완료. (웹 코드 연결은 이 연수에서 하지 않는다)</li></ol></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:63.2%"></b></i></span><span class="ft-num"><b>26</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 26 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p><strong>강사 시연이며 참가자는 따라 하지 않는다.</strong> 사실표 5절. 흔한 오류: Spark 프로젝트에서 접근 불가·버킷 생성 불가(Blaze 필요), 버킷 이름 혼동(기존 <code>*.appspot.com</code> 버킷 vs 새 <code>PROJECT_ID.firebasestorage.app</code>). 버킷 = Storage 안의 파일 보관 단위(Storage 안의 최상위 저장 단위). 무료 사용량은 Blaze에서도 계속 제공된다(기존 기본 버킷 5GB 저장 등, 새 버킷은 Google Cloud Storage "Always Free"가 US-CENTRAL1, US-EAST1, US-WEST1 한정, 다른 리전은 일반 요금). 연수 계정의 $300 체험 크레딧 적용 여부는 <span class="chk" title="원고에 [확인필요]로 남은 항목">확인 필요</span>. 출시 전 점검 항목으로 App Check, 예산 알림, 사용량 대시보드 확인을 공식 문서가 안내한다. 규칙의 내용은 설명하지 않는다. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> <code>.steps</code> 5단계(심화 선택 박스)</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>한국어 UI 번역명</li><li>업그레이드 화면 흐름</li></ul></div></div></section>
+
+<section class="slide k-개념" id="s27" data-n="27" data-kind="개념" data-min="1" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-개념">개념</span></span></header><h2 class="title">Hosting 사용 상황: 정적 웹 콘텐츠 호스팅</h2><div class="body split r46 ovc"><div class="col ovc"><p class="def">Hosting = 정적 웹 콘텐츠 호스팅 서비스. 만든 웹페이지를 공개 URL로 제공한다.</p><div class="uk use"><span>쓴다</span><p>학생이 링크로 접속하는 웹 자료 공개</p><p>수정 후 다시 배포해 즉시 반영</p></div><div class="uk nouse"><span>안 쓴다</span><p>나 혼자 로컬에서 테스트만 할 때, 학생 개인정보가 든 파일</p></div></div><div class="col vis ovc"><svg class="dg " viewBox="0 0 620 400" role="img" aria-label="Hosting: PROJECT_ID.web.app 공개 주소로 정적 파일을 배포하며, 개인정보 파일은 올리지 않는다"><rect x="40" y="70" width="540" height="250" rx="4" class="noch"/><rect x="40" y="70" width="540" height="250" rx="4" fill="none" stroke="var(--ochre-2)" stroke-width="3"/><rect x="150" y="30" width="320" height="56" rx="4" class="nk"/><text x="310" y="58" font-size="23" text-anchor="middle" dominant-baseline="central" class="tp b mono">PROJECT_ID.web.app</text><rect x="80" y="120" width="120" height="150" rx="2" class="n"/><circle cx="140" cy="124" r="6" class="na"/><line x1="96" y1="160" x2="184" y2="160" class="rule"/><line x1="96" y1="184" x2="160" y2="184" class="rule"/><line x1="96" y1="208" x2="184" y2="208" class="rule"/><line x1="96" y1="232" x2="160" y2="232" class="rule"/><rect x="250" y="120" width="120" height="150" rx="2" class="n"/><circle cx="310" cy="124" r="6" class="na"/><line x1="266" y1="160" x2="354" y2="160" class="rule"/><line x1="266" y1="184" x2="330" y2="184" class="rule"/><line x1="266" y1="208" x2="354" y2="208" class="rule"/><line x1="266" y1="232" x2="330" y2="232" class="rule"/><rect x="420" y="120" width="120" height="150" rx="2" class="n"/><circle cx="480" cy="124" r="6" class="na"/><line x1="436" y1="160" x2="524" y2="160" class="rule"/><line x1="436" y1="184" x2="500" y2="184" class="rule"/><line x1="436" y1="208" x2="524" y2="208" class="rule"/><line x1="436" y1="232" x2="500" y2="232" class="rule"/><rect x="40" y="340" width="540" height="52" rx="3" class="naw"/><text x="310" y="366" font-size="22" text-anchor="middle" dominant-baseline="central" class="ta b">개인정보 파일은 올리지 않는다</text></svg></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:68.4%"></b></i></span><span class="ft-num"><b>27</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 27 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p>사실표 6절. 기본 HTTPS 제공. 요금 참고: 저장 10GB, 전송 하루 360MB 무료(Spark·Blaze 동일). 사용자 지정 도메인은 선택 사항. Firebase Hosting은 Spark에서 사용 가능하다(사실표 8절). <strong>Firebase App Hosting과의 차이(검수 확인)</strong>: App Hosting은 서버 렌더링 풀스택 웹앱용이고 Blaze가 필요하다("upgrade to the pay-as-you-go Blaze pricing plan to use App Hosting"). Hosting은 정적·단일 페이지 웹을 CDN으로 배포한다. 슬라이드에는 한 줄만 덧붙인다. 개인정보 파일 금지는 설계서 지시이며 공개 주소에 올라가면 누구나 볼 수 있기 때문이다. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> 배포 파일 → Hosting → <code>PROJECT_ID.web.app</code> 공개 URL 흐름. 아래에 "개인정보 파일은 붙이지 않는다" 경고 라벨.</div></div></section>
+
+<section class="slide k-개념" id="s28" data-n="28" data-kind="개념" data-min="1" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-개념">개념</span><span class="tag">강사 시연</span><span class="tag">심화 선택</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">Hosting 설정 절차 (강사 시연)</h2><div class="body prac console ovc"><div class="col ovc"><ul><li>터미널에서 4단계: CLI 설치 → 로그인 → 초기화 → 배포.</li><li>배포는 <strong>공개 행위</strong>다. Claude Code에게는 <strong>플랜 모드</strong>로 시킨다.</li></ul></div><div class="col main ovc"><div class="grp diag csteps"><ol><li>Node.js(CLI를 돌리는 실행 환경) 설치 후 <code>npm install -g firebase-tools</code> (Firebase CLI = 터미널용 명령 프로그램 설치)</li><li><code>firebase login</code> (브라우저에서 구글 계정 인증)</li><li>프로젝트 폴더에서 <code>firebase init hosting</code> (프로젝트 선택, 공개 폴더 지정 등 질문에 답함) <span class="chk" title="질문 순서와 문구는 CLI 버전에 따라 다름">확인 필요</span></li><li>공개 폴더에 <code>index.html</code> 등을 둔다</li><li><code>firebase deploy --only hosting</code> → <code>PROJECT_ID.web.app</code> 으로 접속</li></ol><ul><li>Claude Code에 시키는 요청 문장 예시(플랜 모드에서, 시연용):</li></ul><div class="code-block"><button class="copy" type="button">복사</button><pre><code>이 폴더를 Firebase Hosting에 배포하는 단계를 계획만 세워줘. 실행은 하지 말고,
+내가 승인한 뒤에만 명령을 실행해. 배포 전에 공개 폴더에 개인정보가 든 파일이 없는지 먼저 확인해줘.</code></pre></div></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:73.7%"></b></i></span><span class="ft-num"><b>28</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 28 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p><strong>강사 시연이며 참가자는 Node.js·CLI를 설치하지 않는다.</strong> 사실표 6절. 흔한 오류: 로그인 안 된 상태에서 배포, 공개 폴더 안에 <code>index.html</code> 없음(기본 안내 페이지가 뜸), 배포 주소를 승인된 도메인에 추가하지 않아 <code>auth/unauthorized-domain</code>(기본 주소는 이미 포함인지 <span class="chk" title="원고에 [확인필요]로 남은 항목">확인 필요</span>), <code>.firebaserc</code>의 잘못된 프로젝트 선택. <code>firebase init hosting</code>, <code>firebase deploy --only hosting</code>, <code>web.app</code>·<code>firebaseapp.com</code> 주소는 Hosting quickstart로 확인됨(검수). 질문 순서만 미확인. 요청 문장 예시는 설계서의 "플랜 모드로" 지시를 따른 것이며, 앱 코드를 만드는 프롬프트가 아니라 배포 <strong>계획</strong>만 요청한다. 배포는 사람이 직접 확인한 뒤에 한다(29번). (1분)</p><div class="nx"><b>도식 설명(강사용)</b> <code>.steps</code> 5단계(심화 선택 박스)</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>질문 순서와 문구는 CLI 버전에 따라 다름</li></ul></div></div></section>
+
+<section class="slide k-점검" id="s29" data-n="29" data-kind="점검" data-min="1" data-module="M3" data-track="fb" data-fsmax="36"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-점검">점검</span><span class="tag">참가자 질문</span></span></header><h2 class="title">질문: 배포 버튼을 누르기 전, 사람이 꼭 볼 것 3가지는?</h2><div class="body quest ovc has-side"><div class="col q-main ovc"><div class="qmark" aria-hidden="true">?</div><ul><li><strong>배포 전에 사람이 꼭 볼 것 3가지는?</strong></li><li>힌트: 접근 규칙, 개인정보, 공개 범위</li></ul></div><div class="col q-side ovc"><div class="blanks"><div class="bl"><b>①</b><i></i></div><div class="bl"><b>②</b><i></i></div><div class="bl"><b>③</b><i></i></div><span class="stamp big" title="사람이 확인하는 단계">확인</span></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:78.9%"></b></i></span><span class="ft-num"><b>29</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 29 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p>모범 답안. ① <strong>접근 규칙(Claude Code가 만든 규칙 파일)이 배포되었는지 Claude Code에게 확인시킨다</strong>(접근 규칙 없이 공개하면 데이터가 노출됨, 사실표 1절 흔한 오류) ② <strong>개인정보가 공개 폴더에 들어 있지 않은지</strong> ③ <strong>공개 범위</strong>(누가 이 주소를 볼 수 있는가). 이 세 가지는 사람이 직접 확인한다. M3의 "실제 배포에 완전 자동 승인 금지"와도 연결한다. 시간 부족 시 짝과 30초만 말해 보게 한다. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> 빈칸 3개 카드(①②③)와 힌트 접힘 상자. 오른쪽에 사람이 확인하는 단계 아이콘.</div></div></section>
+
+<section class="slide k-개념" id="s30" data-n="30" data-kind="개념" data-min="1" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-개념">개념</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">Cloud Functions 사용 상황: 서버리스 백엔드 코드</h2><div class="body split r38 ovc"><div class="col ovc"><ul><li>Cloud Functions = 서버리스 백엔드 코드 실행 서비스. 클라이언트(브라우저)가 직접 하면 안 되는 일을 <strong>서버 쪽에서 대신 처리</strong>한다.</li><li>쓴다: ① AI API 키를 서버에 숨기고 AI 피드백 생성 ② 제출되면 자동으로 후처리</li><li>안 쓴다: 저장·조회만 하면 되는 일(Firestore만으로 충분)</li></ul></div><div class="col vis ovc"><svg class="dg " viewBox="0 0 660 330" role="img" aria-label="학생 브라우저에는 키가 없고, Cloud Functions가 서버 측에 보관한 AI 키로 AI 서비스를 호출한다"><rect x="0" y="70" width="180" height="150" rx="6" class="n"/><rect x="0" y="70" width="180" height="26" rx="6" class="n2"/><circle cx="16" cy="83" r="4" class="fi3"/><circle cx="30" cy="83" r="4" class="fi3"/><circle cx="44" cy="83" r="4" class="fi3"/><text x="90" y="140" font-size="22" text-anchor="middle" dominant-baseline="central" class="b">학생 브라우저</text><rect x="30" y="172" width="120" height="32" rx="16" class="nm"/><text x="90" y="188" font-size="20" text-anchor="middle" dominant-baseline="central" class="t3 b">키 없음</text><path d="M186 145 L236 145" class="ln" marker-end="url(#ah-ink)"/><rect x="242" y="40" width="220" height="210" rx="6" class="noch"/><text x="352" y="74" font-size="24" text-anchor="middle" dominant-baseline="central" class="to b">서버 측</text><text x="352" y="104" font-size="20" text-anchor="middle" dominant-baseline="central" class="b mono">Cloud Functions</text><rect x="290" y="132" width="124" height="96" rx="6" class="nk"/><circle cx="352" cy="168" r="14" class="fw"/><rect x="347" y="168" width="10" height="22" rx="2" class="fw"/><text x="352" y="212" font-size="20" text-anchor="middle" dominant-baseline="central" class="tp b">AI 키</text><text x="352" y="276" font-size="20" text-anchor="middle" dominant-baseline="central" class="to m">서버에 보관한 AI 키</text><path d="M468 145 L520 145" class="ln acc thick" marker-end="url(#ah-acc)"/><rect x="526" y="110" width="134" height="70" rx="6" class="n"/><text x="593" y="145" font-size="22" text-anchor="middle" dominant-baseline="central" class="b">AI 서비스</text></svg></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:84.2%"></b></i></span><span class="ft-num"><b>30</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 30 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p>사실표 7절. 한 줄 정의는 "서버를 직접 두지 않고 필요할 때만 실행되는 서버 쪽 코드를 올려 두는 서비스". 웹에서 부르는 함수는 callable(<code>onCall</code>)을 쓰며 Firebase Auth 토큰이 자동 전달되어 로그인 사용자를 확인할 수 있다. 요금: <strong>배포에는 Blaze 필요</strong>(공식 문서 확인). 2세대 무료 사용량(Blaze): 월 200만 호출, 40만 GB-초. AI 호출 비용은 AI 제공업체의 별도 요금이며 <span class="chk" title="연수에서 사용할 AI 서비스 확정 후">확인 필요</span>. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> 학생 브라우저 → Cloud Functions(서버 측, Secret으로 저장된 AI 키 사용) → AI 서비스. 브라우저에는 키가 없음을 표시.</div></div></section>
+
+<section class="slide k-개념" id="s31" data-n="31" data-kind="개념" data-min="1" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-개념">개념</span><span class="tag">강사 시연</span><span class="tag">심화 선택</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">Cloud Functions 설정 절차 (강사 시연)</h2><div class="body prac console ovc"><div class="col ovc"><ul><li>Blaze 업그레이드 → CLI 초기화 → <strong>비밀값 저장</strong> → 배포.</li><li>비밀값(AI API 키)은 브라우저 코드·HTML·<code>.env</code> 커밋에 <strong>넣지 않는다</strong>.</li></ul></div><div class="col main ovc"><div class="grp diag csteps"><ol><li>콘솔에서 <strong>Blaze로 업그레이드</strong>(결제 수단 등록) 후 <strong>예산 알림</strong> 설정 (23번) <span class="chk" title="비용, 결제 수단 등록은 승인 후">확인 필요</span></li><li>Node.js 20 또는 22 <span class="chk" title="지원 버전">확인 필요</span> + <code>npm install -g firebase-tools</code> (Node.js = CLI를 돌리는 실행 환경, CLI = 터미널용 명령 프로그램)</li><li>프로젝트 폴더에서 <code>firebase init functions</code> <span class="chk" title="언어 선택 등 질문">확인 필요</span></li><li>비밀값을 <strong>Secret</strong>으로 저장: <code>firebase functions:secrets:set 이름</code></li><li>배포: <code>firebase deploy --only functions</code></li></ol></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:89.5%"></b></i></span><span class="ft-num"><b>31</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 31 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p><strong>강사 시연이며 참가자는 따라 하지 않는다. 시연에서 실제 결제 수단을 쓰지 않아도 되도록 화면 캡처 사용을 권장한다.</strong> 사실표 7절. 비밀값 관리: 권장 방식은 매개변수화된 구성(Parameterized configuration)이며 유형에 Secret이 포함된다. Secret 값은 Cloud Secret Manager에 저장되고 <strong>개별 함수에 바인딩</strong>해야 쓸 수 있다. 위 명령과 코드의 <code>defineSecret</code>·<code>secrets: [...]</code> 옵션은 functions get-started, config-env 문서로 확인됨(검수). 일반(비밀 아닌) 설정은 <code>functions/.env</code>. 옛 방식 <code>functions.config()</code>는 deprecated(v6.0.0), 2027년 3월 중단 예정이므로 <strong>연수 자료에서 쓰지 않는다</strong>. 흔한 오류: Blaze가 아니라 배포 거부, Secret 값 누락으로 CLI가 배포를 막음, Node 버전 불일치, Secret을 함수에 바인딩하지 않아 런타임 값이 빔. 사용량 상한을 거는 지출 한도 예산은 Cloud Functions에 적용 가능하다(23번). (1분)</p><div class="nx"><b>도식 설명(강사용)</b> <code>.steps</code> 5단계(심화 선택 박스)</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>비용, 결제 수단 등록은 승인 후</li><li>지원 버전</li><li>언어 선택 등 질문</li></ul></div></div></section>
+
+<section class="slide k-실습" id="s32" data-n="32" data-kind="실습" data-min="2" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-실습">실습</span><span class="tag">참가자 실습</span><span class="chk hd-chk" title="이 슬라이드(본문 또는 노트)에 원고의 [확인필요]가 남아 있습니다">확인 필요</span></span></header><h2 class="title">종합 상황 카드: 필요한 기능과 요금제는?</h2><div class="body prac ovc"><div class="col steps ovc"><div class="lbl l-step">단계</div><ol class="tl"><li><span class="sn">1</span><div class="st">카드 3장을 보고 <strong>먼저 직접</strong> 필요한 기능을 고른다.</div></li><li><span class="sn">2</span><div class="st">그다음 Claude Code에게 같은 질문을 하고 비교한다. <strong>링크를 확인하기 전에는 믿지 않는다.</strong></div></li></ol><div class="resbox mov"><div class="lbl l-res">예상 결과</div><p>기능과 요금제가 표로 나오고 행마다 공식 문서 링크가 붙는다. 사실표 9절의 정답과 비교하면 ① Storage(Blaze 필요) ② Hosting(Spark) ③ Cloud Functions + Secret(Blaze 필요).</p></div><div class="stkbox mov"><div class="lbl l-stk">막힐 때</div><ul><li>링크가 열리지 않거나 내용이 다름 → 그 행은 믿지 않는다. 링크를 직접 열어 확인하고, 확인 못 하면 <span class="chk" title="원고에 [확인필요]로 남은 항목">확인 필요</span>로 남긴다.</li><li>요금제가 내 답과 다름 → 22번 표와 pricing 페이지(https://firebase.google.com/pricing)를 기준으로 다시 본다.</li></ul></div></div><div class="col main ovc"><div class="grp"><ol class="sits"><li><p>PDF·이미지·영상 같은 큰 파일을 올리고 싶다</p><div class="sa">기능 <i></i> 요금제 Spark · Blaze</div></li><li><p>만든 앱을 학생에게 링크로 공개하고 싶다</p><div class="sa">기능 <i></i> 요금제 Spark · Blaze</div></li><li><p>AI로 제출 답안에 맞춤 피드백을 달고 싶다(API 키는 숨기고 싶다)</p><div class="sa">기능 <i></i> 요금제 Spark · Blaze</div></li></ol></div><div class="grp"><div class="prompt-box"><button class="copy" type="button">복사</button><pre><code>이 수업 아이디어에 필요한 Firebase 기능과 요금제(Spark/Blaze)를 표로 정리해줘.
+각 행에 근거가 되는 Firebase 공식 문서 링크를 같이 적어줘. 확실하지 않은 것은 &quot;확인필요&quot;라고 적어줘.
+앱 코드는 만들지 마.
+
+수업 아이디어: (위 카드 중 하나 또는 내가 만들고 싶은 수업 아이디어를 적는다)</code></pre></div></div></div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:94.7%"></b></i></span><span class="ft-num"><b>32</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 32 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 2분</div><p>AI가 낸 표는 근거 링크를 사람이 열어 확인한 뒤에야 쓴다. 카드 3장은 사실표 9절 선택표에서 가져왔고 정답은 사실표 그대로이다(접근 통제 카드는 규칙을 설명하지 않는 방침에 따라 뺐다). 선택표에서 Storage는 Blaze 필요, Hosting은 Spark(<code>web.app</code> 주소), Functions+Secret은 Blaze 필요이다. 프롬프트에 앱 코드를 만들지 말라는 문장을 넣었다. 시간이 없으면 카드 2장만 다룬다. (2분)</p><div class="nx"><b>도식 설명(강사용)</b> 상황 카드 3장(사실표 9절 선택표에서 가져옴)</div><div class="nx"><b>이 슬라이드의 확인 필요 항목</b><ul><li>상세 없음</li></ul></div><div class="nx"><b>막힐 때</b><ul><li>링크가 열리지 않거나 내용이 다름 → 그 행은 믿지 않는다. 링크를 직접 열어 확인하고, 확인 못 하면 <span class="chk" title="원고에 [확인필요]로 남은 항목">확인 필요</span>로 남긴다.</li><li>요금제가 내 답과 다름 → 22번 표와 pricing 페이지(https://firebase.google.com/pricing)를 기준으로 다시 본다.</li></ul></div></div></section>
+
+<section class="slide k-정리" id="s33" data-n="33" data-kind="정리" data-min="1" data-module="M3" data-track="fb" data-fsmax="28"><header class="hd"><span class="hd-mod"><b>M3</b>Firebase 기능 지도와 콘솔 설정</span><span class="hd-meta"><span class="kind k-정리">정리</span><span class="tag">실습 시간</span></span></header><h2 class="title">설정 체크리스트와 정리</h2><div class="body tbl ovc"><div class="lead ovc"><ul><li>내가 한 것 / 강사가 보여 준 것을 표시한다.</li><li>연수가 끝나면 <strong>테스트 프로젝트를 삭제</strong>한다. 이 프로젝트로 앱을 계속 만들 사람은 삭제하지 않는다.</li></ul></div><div class="tw ovc"><div class="chkt"><table><thead><tr><th>직접 해 봤다 (Spark)</th><th>시연으로 봤다 (심화 선택)</th></tr></thead><tbody><tr><td><i class="box"></i>프로젝트 만들기</td><td><i class="box"></i>요금제·예산 알림</td></tr><tr><td><i class="box"></i>웹 앱 등록, firebaseConfig 확인</td><td><i class="box"></i>Storage</td></tr><tr><td><i class="box"></i>Google 로그인 켜기</td><td><i class="box"></i>Hosting 배포</td></tr><tr><td><i class="box"></i>Firestore 만들기(프로덕션 모드)</td><td><i class="box"></i>Cloud Functions</td></tr></tbody></table></div></div><div class="info">연수 후 삭제 → 콘솔 <strong>프로젝트 설정 &gt; 일반(General) &gt; 맨 아래 "프로젝트 삭제"</strong> → 체크박스를 확인하고 삭제. 30일 안에는 Google Cloud 콘솔에서 복구할 수 있다.</div></div><footer class="ft"><span class="ft-tr">Firebase 기능 지도</span><span class="ft-bar"><i class="past" style="flex:6"><b style="width:100.0%"></b></i><i class="past" style="flex:7"><b style="width:100.0%"></b></i><i class="cur" style="flex:19"><b style="width:100.0%"></b></i></span><span class="ft-num"><b>33</b> / 33</span></footer><div class="notes"><div class="nmeta">슬라이드 33 · M3 Firebase 기능 지도와 콘솔 설정 · 소요 1분</div><p>프로젝트 삭제 절차는 검수에서 확인되었다(Firebase 도움말 "Delete your project", https://support.google.com/firebase/answer/9137886). 한국어 UI 메뉴명은 리허설에서 한 번 대조한다. 실제 학생 계정과 이름은 입력하지 않았는지 마지막으로 확인한다. 이 모듈 전체의 비용 원칙: 연수는 Spark(무료)로 끝낸다. (1분)</p><div class="nx"><b>도식 설명(강사용)</b> 체크표 2열</div></div></section>
+</div></div><div id="notes" aria-live="polite"></div><div id="grid" role="dialog" aria-label="슬라이드 목차"></div><div id="help">→ 다음 · ← 이전 · G 목차 · N 노트 · F 전체화면(한글 입력 상태에서도 가능) · P 인쇄</div><pre id="report" style="display:none"></pre><script>
+(function(){
+var slides=[].slice.call(document.querySelectorAll('.slide')),total=slides.length,cur=0,started=false;
+var stage=document.getElementById('stage'),notes=document.getElementById('notes'),grid=document.getElementById('grid');
+function scale(){var s=Math.min(innerWidth/1280,innerHeight/720);stage.style.transform='scale('+s+')';stage.dataset.k=s;}
+function over(sl){
+  var els=sl.querySelectorAll('.ovc,.vis,.prompt-box,.file-box,.terminal,.code-block,table');
+  for(var i=0;i<els.length;i++){var e=els[i];
+    if(e.scrollHeight>e.clientHeight+1||e.scrollWidth>e.clientWidth+1)return e;}
+  var ft=sl.querySelector('.ft'),b=sl.querySelector('.band')||sl.querySelector('.body');
+  if(ft&&b&&b.getBoundingClientRect().bottom>ft.getBoundingClientRect().top+1)return b;
+  return null;
+}
+var KEYS=['fs','fp','fr','fk'];
+var PH=[{fs:27,fp:22,fr:18,fk:21},{fs:24,fp:22,fr:15,fk:20},{fs:24,fp:20,fr:13,fk:19},{fs:22,fp:18,fr:12,fk:18},{fs:18,fp:15,fr:11,fk:16},{fs:12,fp:11,fr:9,fk:12}];
+function setv(sl,v){for(var k in v)sl.style.setProperty('--'+k,v[k]+'px');}
+function present(sl,el){
+  if(!el||el.classList.contains('body')||el===sl)return {fs:true,fp:true,fr:true,fk:true};
+  if(el.closest('.band'))return {fs:false,fp:false,fr:false,fk:true};
+  var inR=!!el.closest('.rescode'),box=el.matches('.prompt-box,.file-box,.terminal,.code-block');
+  if(box)return {fs:false,fp:!inR,fr:inR,fk:false};
+  var has={fs:true};
+  has.fp=!!el.querySelector('.prompt-box,.code-block,.file-box:not(.rescode .file-box)')&&!inR;
+  has.fr=inR||!!el.querySelector('.rescode');
+  has.fk=!!el.querySelector('.stkbox,.resbox');
+  return has;
+}
+function run(sl,mx){
+  var v={fs:mx,fp:24,fr:22,fk:22};setv(sl,v);
+  for(var ph=0;ph<PH.length;ph++){
+    var fl=PH[ph],g=0,el;
+    while((el=over(sl))&&g++<400){
+      var has=present(sl,el),best=null,bd=0;
+      for(var i=0;i<4;i++){var k=KEYS[i];if(!has[k])continue;var d=(v[k]-fl[k])/fl[k];if(d>bd+1e-9){bd=d;best=k;}}
+      if(!best){has={fs:true,fp:true,fr:true,fk:true};for(var j=0;j<4;j++){var k2=KEYS[j];var d2=(v[k2]-fl[k2])/fl[k2];if(d2>bd+1e-9){bd=d2;best=k2;}}}
+      if(!best)break;v[best]-=0.5;setv(sl,v);
+    }
+    if(!over(sl))return {v:v,ph:ph};
+  }
+  return {v:v,ph:PH.length};
+}
+function fitTitle(sl){
+  var t=sl.querySelector('.title');if(!t||!t.offsetHeight)return 46;var f=(sl.classList.contains('tight')||sl.classList.contains('k-실습'))?42:46;sl.style.setProperty('--ft',f+'px');
+  while(t.offsetHeight>f*1.16*2+4&&f>34){f-=1;sl.style.setProperty('--ft',f+'px');}
+  return f;
+}
+function minText(sl){
+  var k=1,mn=99,mc=99,who='';
+  var all=sl.querySelectorAll('.body *,.band *,.title,.title *,.rail *');
+  for(var i=0;i<all.length;i++){var e=all[i];
+    if(e.closest('.chk,.lbl,.copy,.fb-title,.ph,.tag,.kind,.rlab,.ey,.rk,.req,.fm-p,.cl,.rx,.uk>span,.gt,.cav,.quote small,.pat small,.rail dt,.stamp,.timer,.tctl'))continue;
+    if(e.tagName==='CODE'&&!e.closest('pre'))continue;
+    var txt=false;for(var c=e.firstChild;c;c=c.nextSibling){if(c.nodeType===3&&c.textContent.trim()){txt=true;break;}}
+    if(!txt)continue;
+    var r=e.getBoundingClientRect();if(!r.width)continue;
+    var fs;
+    if(e instanceof SVGElement){var svg=e.ownerSVGElement||e;var vb=svg.viewBox&&svg.viewBox.baseVal;
+      var sc=vb&&vb.width?svg.getBoundingClientRect().width/vb.width/(+stage.dataset.k||1):1;
+      fs=parseFloat(getComputedStyle(e).fontSize)*sc;}
+    else fs=parseFloat(getComputedStyle(e).fontSize);
+    var code=!!e.closest('pre');
+    if(code){if(fs<mc)mc=fs;}else if(fs<mn){mn=fs;who=e.tagName+'.'+(e.className&&e.className.baseVal!==undefined?e.className.baseVal:e.className);}
+  }
+  return {min:Math.round(mn*10)/10,minCode:mc===99?null:Math.round(mc*10)/10,who:who};
+}
+var report=[];
+function score(r,sl){
+  var s=Math.min(r.v.fs/26,1.2);
+  if(sl.querySelector('.body .prompt-box,.body .code-block'))s=Math.min(s,r.v.fp/22);
+  if(sl.querySelector('.rescode'))s=Math.min(s,r.v.fr/15+.15);
+  if(sl.querySelector('.stkbox,.resbox,.band'))s=Math.min(s,r.v.fk/20+.05);
+  if(r.ov)s-=1;
+  return s;
+}
+function attempt(sl,mx,hide){
+  sl.classList.toggle('nostuck',hide);
+  var a=run(sl,mx);a.ov=!!over(sl);return a;
+}
+function place(m,col){if(m.classList.contains('top'))col.insertBefore(m,col.firstChild);else col.appendChild(m);}
+function fit(sl){
+  var ft=fitTitle(sl),mx=+sl.dataset.fsmax||32;
+  var movs=[].slice.call(sl.querySelectorAll('.mov')),cols=sl.querySelectorAll('.body.prac>.col');
+  var hasStk=!!sl.querySelector('.cell.stk,.stkbox');
+  var best=null;
+  var combos=(movs.length&&cols.length===2)?(1<<movs.length):1;
+  var home=movs.map(function(m){return m.parentNode;});
+  for(var c=0;c<combos;c++){
+    if(combos>1)movs.forEach(function(m,i){place(m,((c>>i)&1)?(home[i]===cols[0]?cols[1]:cols[0]):home[i]);});
+    for(var h=0;h<(hasStk?2:1);h++){
+      var a=attempt(sl,mx,!!h),sc=score(a,sl)-(h?.06:0);
+      if(!best||sc>best.sc+1e-6)best={c:c,h:!!h,sc:sc};
+    }
+  }
+  if(combos>1)movs.forEach(function(m,i){place(m,((best.c>>i)&1)?(home[i]===cols[0]?cols[1]:cols[0]):home[i]);});
+  var a=attempt(sl,mx,best.h);
+  var m=minText(sl);
+  return {n:+sl.dataset.n,fs:a.v.fs,fp:a.v.fp,fr:a.v.fr,fk:a.v.fk,ft:ft,over:!!over(sl),stuckHidden:best.h,moved:best.c,min:m.min,minCode:m.minCode,who:m.who};
+}
+var fitted=[],t0=0;
+function ensure(i){if(!fitted[i]){fitted[i]=1;report[i]=fit(slides[i]);}}
+function fitAll(){
+  t0=performance.now();var i=0;
+  (function step(){var t=performance.now();while(i<total&&performance.now()-t<40){ensure(i);i++;}
+    if(i<total)setTimeout(step,0);
+    else{var r=report.slice();r.push({n:0,ms:Math.round(performance.now()-t0)});var el=document.getElementById('report');if(el)el.textContent=JSON.stringify(r);}
+  })();
+}
+/* 휴식 슬라이드: 화면에 들어오면 카운트다운 시작. 다른 장에 다녀와도 시간은 계속 흐른다. 일시 정지·다시 시작·처음부터 버튼 */
+var brkEnd=0,brkRem=0,brkTimer=null; /* brkEnd: 실행 중일 때 종료 시각(ms), brkRem: 일시 정지 중 남은 시간(ms) */
+function brkFmt(n){var m=Math.floor(n/60),r=n%60;return (m<10?'0':'')+m+':'+(r<10?'0':'')+r;}
+function brkLeft(){return brkEnd?Math.max(0,brkEnd-Date.now()):brkRem;}
+function brkPaint(box){
+  var el=box.querySelector('.timer'),pb=box.querySelector('[data-act=pause]');
+  var left=Math.ceil(brkLeft()/1000),str=brkFmt(left);
+  if(el.dataset.t!==str){var h='';for(var i=0;i<str.length;i++){var c=str.charAt(i);h+='<span class="c'+(c===':'?' s':'')+'">'+c+'</span>';}el.innerHTML=h;el.dataset.t=str;}
+  var done=brkEnd>0&&left===0,paused=brkEnd===0&&brkRem>0;
+  el.classList.toggle('done',done);el.classList.toggle('paused',paused);
+  pb.textContent=paused?'다시 시작':'일시 정지';pb.disabled=done;
+  if(done&&brkTimer){clearInterval(brkTimer);brkTimer=null;}
+}
+function brkSync(){
+  if(brkTimer){clearInterval(brkTimer);brkTimer=null;}
+  var box=slides[cur]&&slides[cur].querySelector('.tcol');if(!box)return;
+  var sec=+box.querySelector('.timer').dataset.sec||600;
+  if(!brkEnd&&!brkRem)brkEnd=Date.now()+sec*1000;
+  brkPaint(box);
+  if(brkEnd&&Date.now()<brkEnd)brkTimer=setInterval(function(){brkPaint(box);},250);
+}
+document.addEventListener('click',function(e){
+  var b=e.target.closest&&e.target.closest('.tbtn');if(!b)return;
+  var box=b.closest('.tcol'),sec=+box.querySelector('.timer').dataset.sec||600;
+  if(b.dataset.act==='reset'){brkEnd=Date.now()+sec*1000;brkRem=0;}
+  else if(brkEnd){brkRem=Math.max(0,brkEnd-Date.now());brkEnd=0;}
+  else if(brkRem){brkEnd=Date.now()+brkRem;brkRem=0;}
+  brkSync();
+});
+function show(i,keep){
+  i=Math.max(0,Math.min(total-1,i));cur=i;
+  if(started)ensure(i);
+  slides.forEach(function(s,k){s.classList.toggle('on',k===i);s.setAttribute('aria-hidden',k===i?'false':'true');});
+  if(!keep)history.replaceState(null,'','#'+(i+1));
+  notes.innerHTML=slides[i].querySelector('.notes').innerHTML;notes.scrollTop=0;
+  document.title='['+(i+1)+'/'+total+'] 하네스와 Firebase';
+  brkSync();
+}
+function buildGrid(){
+  var h='<div class="gh">슬라이드 목차 · 클릭하거나 Enter, G 또는 Esc로 닫기</div>',mod='';
+  slides.forEach(function(s,k){
+    if(s.dataset.module!==mod){if(mod)h+='</div>';mod=s.dataset.module;
+      var nm=s.querySelector('.hd-mod').textContent.replace(mod,'');
+      h+='<div class="gm" data-track="'+s.dataset.track+'" style="--tone:'+getComputedStyle(s).getPropertyValue('--tone')+'"><b>'+mod+'</b>'+nm+'</div><div class="tiles">';}
+    h+='<div class="tile" tabindex="0" data-i="'+k+'" data-kind="'+s.dataset.kind+'" style="--tone:'+getComputedStyle(s).getPropertyValue('--tone')+'"><small><span>'+(k+1)+'</span><i>'+s.dataset.kind+'</i><span>'+s.dataset.min+'분</span></small>'+s.querySelector('.title').innerHTML+'</div>';
+  });
+  grid.innerHTML=h+'</div>';
+}
+function openTile(t){show(+t.dataset.i);grid.classList.remove('show');}
+grid.addEventListener('click',function(e){var t=e.target.closest('.tile');if(t)openTile(t);});
+document.addEventListener('click',function(e){
+  var b=e.target.closest('.copy');if(!b)return;
+  var box=b.parentNode,c=box.querySelector('code');if(!c)return;
+  var txt=c.textContent;
+  function ok(){b.textContent='복사됨';b.classList.add('done');setTimeout(function(){b.textContent='복사';b.classList.remove('done');},1200);}
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(ok,function(){fb()});}else fb();
+  function fb(){var t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);t.select();try{document.execCommand('copy');ok();}catch(x){}document.body.removeChild(t);}
+});
+document.addEventListener('keydown',function(e){
+  if(e.ctrlKey||e.metaKey||e.altKey)return;
+  var k=e.key;
+  /* 한글 입력 상태(ㄹ·ㅎ·ㅜ·ㅔ)에서도 단축키가 되도록 글자 키는 물리 키 위치로 인식 */
+  var kc={KeyF:'f',KeyG:'g',KeyN:'n',KeyP:'p'};
+  if(e.code&&kc[e.code])k=kc[e.code];
+  if(grid.classList.contains('show')){
+    if(k==='Enter'&&document.activeElement&&document.activeElement.classList.contains('tile')){openTile(document.activeElement);return;}
+    if(k!=='g'&&k!=='G'&&k!=='Escape')return;
+  }
+  if(e.target&&e.target.closest&&e.target.closest('.copy,.tbtn')&&(k===' '||k==='Enter'))return;
+  if(k==='ArrowRight'||k===' '||k==='PageDown'){e.preventDefault();show(cur+1);}
+  else if(k==='ArrowLeft'||k==='PageUp'){e.preventDefault();show(cur-1);}
+  else if(k==='Home'){show(0);}else if(k==='End'){show(total-1);}
+  else if(k==='g'||k==='G'){grid.classList.toggle('show');var t=grid.querySelectorAll('.tile');t.forEach(function(x,i){x.classList.toggle('cur',i===cur);});
+    if(grid.classList.contains('show')&&t[cur]){t[cur].focus({preventScroll:true});t[cur].scrollIntoView({block:'center'});}}
+  else if(k==='Escape'){grid.classList.remove('show');}
+  else if(k==='n'||k==='N'){notes.classList.toggle('show');}
+  else if(k==='f'||k==='F'){var de=document.documentElement;
+    if(document.fullscreenElement){document.exitFullscreen();}
+    else if(de.requestFullscreen){var r=de.requestFullscreen();if(r&&r.catch)r.catch(function(){});}
+    else if(de.webkitRequestFullscreen){de.webkitRequestFullscreen();}}
+  else if(k==='p'||k==='P'){window.print();}
+});
+var tx=null;
+document.addEventListener('touchstart',function(e){tx=e.touches[0].clientX;},{passive:true});
+document.addEventListener('touchend',function(e){if(tx===null)return;var d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>50)show(cur+(d<0?1:-1));tx=null;});
+addEventListener('resize',scale);
+addEventListener('hashchange',function(){var n=parseInt(location.hash.slice(1),10);if(n)show(n-1,true);});
+scale();setTimeout(function(){document.getElementById('help').classList.add('off');},6000);
+var n0=parseInt(location.hash.slice(1),10);show(n0?n0-1:0,true);
+function start(){if(started)return;started=true;ensure(cur);show(cur,true);fitAll();}
+buildGrid();
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(start);else start();
+addEventListener('load',start);
+addEventListener('beforeprint',function(){for(var i=0;i<total;i++)ensure(i);});
+})();
+</script></body></html>
