@@ -243,7 +243,7 @@
   - 확인 5가지: ① 문항이 로그인 없이 보임 ② Google 로그인(테스트 계정) ③ 답 저장 ④ 새로고침 후 불러오기 ⑤ (선택) 콘솔 Firestore 데이터에서 저장된 문서 확인.
   - 확인이 끝나면 주소를 짝에게 전한다.
 - 막힐 때:
-  - 로그인 팝업에서 `auth/unauthorized-domain`이 뜸 → 오류 문구를 Claude Code에 그대로 보여 주면 콘솔 Authentication > Settings > 승인된 도메인에 어떤 도메인을 추가할지 알려 준다. 사람이 콘솔에서 그 도메인만 추가한다 `[확인필요: Hosting 기본 주소가 기본 포함인지]`.
+  - 로그인 팝업에서 `auth/unauthorized-domain`이 뜸 → 오류 문구를 Claude Code에 그대로 보여 주면 콘솔 보안(Security) > Authentication > 설정(Settings) 탭 > 승인된 도메인(Authorized domains)에 어떤 도메인을 추가할지 알려 준다. 사람이 콘솔에서 그 도메인만 추가한다 `[확인필요: Hosting 기본 주소가 기본 포함인지]`.
   - 화면이 비어 있음/404 → 오류 문구나 화면을 그대로 Claude Code에 전달한다.
   - 저장 시 `Missing or insufficient permissions` → 오류 문구를 그대로 Claude Code에 전달한다.
 - 노트: 4분 동안 배포된 결과를 직접 확인한다. 로그인 없이 문항이 보여야 짝이 주소만 열어서 볼 수 있다. 로그인은 저장과 불러오기에만 쓴다. ⑤는 시간이 남는 사람만 한다. 콘솔 Firestore 데이터 화면에서 응답이 저장된 문서를 볼 수 있다. 로그인 팝업 오류 `auth/unauthorized-domain`은 M6 38번에서 한 번 보았다. 승인된 도메인은 로그인 팝업을 허용하는 주소 목록이다. 2025-04-28 이후 만든 프로젝트는 기본 목록이 다를 수 있어, Hosting 기본 주소의 포함 여부는 오류가 날 때만 확인한다 `[확인필요]`. 오류가 나면 문구를 그대로 Claude Code에 전달하는 습관을 62번에서 연습한다. (4분)
