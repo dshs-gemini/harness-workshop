@@ -59,7 +59,7 @@ def load_goals():
         info.setdefault(code, {"goal": "", "output": ""})["goal"] = goal
     info.setdefault("M4", {})["output"] = "`mini-harness/.claude/` (퀴즈 만드는 에이전트 + 검수 에이전트 + 오케스트레이터 스킬)"
     info.setdefault("M5", {})["output"] = "고친 `.claude/agents/*.md` + 내 업무용 새 팀"
-    info.setdefault("M6", {})["output"] = "인증(Google 로그인)과 Firestore 설정을 마친 Firebase 테스트 프로젝트"
+    info.setdefault("M6", {})["output"] = "인증(Google 로그인)·Firestore·요금제(Blaze, 예산 알림)·Storage 설정과 Functions 배포를 마친 Firebase 테스트 프로젝트"
     info.setdefault("M7", {})["output"] = "`unit-project/` (`unit-spec.md`, `.claude/`, `slides.html`, `workbook/`, `firestore.rules`) + 배포 주소"
     return info
 

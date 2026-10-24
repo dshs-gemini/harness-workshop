@@ -324,7 +324,7 @@ GOALS_NEW = {
     "M3": "CLAUDE.md로 반복 규칙을 남기고, 나만의 스킬(/quiz)을 만들어 재사용할 수 있다.",
     "M4": "하네스(revfactory/harness) 플러그인을 설치하고, 말로 요청해 '만드는 쪽 + 검수하는 쪽' 팀을 만들어 실행할 수 있다.",
     "M5": "하네스가 만든 `.claude/` 파일을 열어 읽고, 말로 고쳐 다시 실행해 결과를 비교할 수 있다.",
-    "M6": "Firebase 6개 항목을 언제 쓰는지 고르고, 콘솔에서 인증과 데이터베이스를 직접 설정할 수 있다. 접근 규칙은 Claude Code가 만든다.",
+    "M6": "Firebase 6개 항목을 언제 쓰는지 고르고, 콘솔과 CLI로 인증·데이터베이스·요금제·Storage·Cloud Functions 설정을 함께 해 볼 수 있다. 접근 규칙은 Claude Code가 만든다.",
     "M7": "자기 교과 단원의 명세를 쓰고 하네스로 수업 슬라이드와 학생 워크북 웹앱을 만들어 Firebase Hosting 주소로 확인할 수 있다.",
 }
 
@@ -2114,7 +2114,7 @@ def ov_34(p):
     leg = re.search(r"범례:\s*(.+)$", p["diag_rest"], re.M)
     mine = []
     if leg:
-        m = re.search(r"내가 직접 해 볼 것 = ([^/]+)", leg.group(1))
+        m = re.search(r"(?:내가 직접|함께) 해 볼 것 = ([^/]+)", leg.group(1))
         mine = [x.strip() for x in m.group(1).split("·")] if m else []
     cards = ""
     for name, ana, plan, ex in cells:
@@ -2127,7 +2127,7 @@ def ov_34(p):
     legend = ""
     if leg:
         parts = [x.strip() for x in leg.group(1).split(" / ")]
-        legend = '<div class="fmleg"><span class="own">%s</span><span class="demo">%s</span></div>' % (esc(parts[0]), esc(parts[1].rstrip(".")) if len(parts) > 1 else "")
+        legend = '<div class="fmleg"><span class="own">%s</span>%s</div>' % (esc(parts[0].rstrip(".")), ('<span class="demo">%s</span>' % esc(parts[1].rstrip("."))) if len(parts) > 1 else "")
     nm_ = re.search(r"표 아래 한 줄:\s*(.+)$", p["diag_rest"], re.M)
     note = '<div class="info" style="margin-top:16px">%s</div>' % inline(nm_.group(1).strip()) if nm_ else ""
     return L_stack(p, '<div class="fmap%s">%s</div>%s%s' % (" c3" if len(cells) == 6 else "", cards, legend, note)), "", 26

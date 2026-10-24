@@ -15,7 +15,7 @@
 - 문항은 로그인 없이 보이고, 로그인은 답 저장·불러오기에만 쓴다(짝이 주소를 열어 로그인 없이 문항을 볼 수 있다).
 - Firebase SDK 버전 번호, 파일 구조, Firestore 문서 경로는 슬라이드에서 지정하지 않는다. Claude Code가 정한다.
 - localhost, 로컬 서버, 승인된 도메인 사전 추가는 요구하지 않는다.
-- Storage와 Cloud Functions는 쓰지 않는다(Blaze 필요, M6 41). 이 모듈은 Spark로 완결된다.
+- M6에서 요금제를 Blaze로 올렸더라도 M7 프로젝트는 Authentication·Firestore·Hosting만 쓴다. Storage와 Cloud Functions는 쓰지 않는다. Node.js·Firebase CLI·`firebase login`은 M6 47에서 함께 해 두었을 수 있으며, 59번에서는 연결 확인만 한다.
 - 정답 표시·채점·교사용 열람 화면은 만들지 않는다(교사는 콘솔 Firestore 데이터 화면에서 확인, 열람 화면은 선택 심화). 워크북은 학생 응답 저장·재방문 불러오기까지다.
 - 용어: 테스트 계정 = Firebase 실습에 쓰는 개인 구글 계정(학생·업무 계정이 아닌 것).
 - 도식은 53(흐름 5단계 + 폴더 트리 + 안전 원칙)과 63(회고 한 장)에만 쓴다. 58은 도식 없이 단계·명령 중심이다. 나머지 슬라이드는 `도식` 줄 없이 구성했다.
