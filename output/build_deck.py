@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """하네스 엔지니어링 교원연수 HTML 슬라이드 덱 조립기.
 
-입력 : _workspace/deck/02_writer_M1..M5,M6,M7,MW_slides.md  (슬라이드 1-68)
+입력 : _workspace/deck/02_writer_M1..M5,M6,M7,MW_slides.md  (슬라이드 1-71)
 출력 : output/하네스엔지니어링_교원연수_슬라이드.html (외부 의존 없는 단일 파일)
 사용 : python3 output/build_deck.py
 원고를 고친 뒤 이 스크립트를 다시 실행하면 한 번에 재조립된다.
@@ -25,18 +25,19 @@ FILES = ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "MW"]
 
 # 설계서 모듈표(슬라이드 번호 범위, 모듈 이름)
 MODULES = [
-    (1, 6, "M1", "도입 · Claude Code 첫 대화"),
-    (7, 11, "M2", "잘 시키는 법: 프롬프트 · 컨텍스트 · 플랜 모드"),
-    (12, 19, "M3", "CLAUDE.md · 스킬 · 권한"),
-    (20, 25, "M4", "하네스 입문"),
-    (26, 33, "M5", "하네스가 만든 파일 읽고 고치기"),
-    (34, 52, "M6", "Firebase 기능 지도와 콘솔 설정"),
-    (53, 64, "M7", "프로젝트: 우리 교과 단원 수업 패키지 만들기"),
-    (65, 68, "MW", "마무리"),
+    (1, 9, "M1", "도입 · Claude Code 첫 대화"),
+    (10, 14, "M2", "잘 시키는 법: 프롬프트 · 컨텍스트 · 플랜 모드"),
+    (15, 22, "M3", "CLAUDE.md · 스킬 · 권한"),
+    (23, 28, "M4", "하네스 입문"),
+    (29, 36, "M5", "하네스가 만든 파일 읽고 고치기"),
+    (37, 55, "M6", "Firebase 기능 지도와 콘솔 설정"),
+    (56, 67, "M7", "프로젝트: 우리 교과 단원 수업 패키지 만들기"),
+    (68, 71, "MW", "마무리"),
 ]
 FIELD_RE = re.compile(r"^- (유형|본문|도식|프롬프트|예상 결과|막힐 때|노트):[ \t]*(.*)$")
 SLIDE_RE = re.compile(r"^## \[슬라이드 (\d+)\]\s*(.*)$")
 CHECK_RE = re.compile(r"(`?)\[확인필요([^\]]*)\]\1")
+LINK_RE = re.compile(r"\[([^\]\n]+)\]\((https?://[^)\s]+)\)")
 CAPTURE_RE = re.compile(r"`?\[(화면 캡처 자리[^\]]*|설문 링크/QR[^\]]*)\]`?")
 
 
@@ -108,8 +109,13 @@ def inline(text, tokens=None):
             return keep('<span class="ph">%s</span>' % html.escape(label))
         return keep('<span class="ph">%s</span>' % html.escape(label))
 
+    def link(m):
+        return keep('<a href="%s" target="_blank" rel="noopener">%s</a>'
+                    % (html.escape(m.group(2), quote=True), html.escape(m.group(1))))
+
     text = CHECK_RE.sub(chk, text)
     text = CAPTURE_RE.sub(cap, text)
+    text = LINK_RE.sub(link, text)
 
     def code(m):
         body = m.group(1)
@@ -314,8 +320,8 @@ TRACK_LABEL = {"t1": "Track 1 · Claude Code 기본", "t2": "Track 2 · 하네�
 SHORT = {"M1": "첫 대화", "M2": "프롬프트", "M3": "CLAUDE.md·스킬", "M4": "하네스 입문",
          "M5": "하네스 파일 고치기", "M6": "Firebase 지도",
          "M7": "수업 패키지 프로젝트", "MW": "마무리"}
-BREAK_SLIDE = 33
-OPENERS = {7, 12, 20, 26, 34, 53, 65}  # 모듈 첫 슬라이드(M1은 표지가 대신한다)
+BREAK_SLIDE = 36
+OPENERS = {10, 15, 23, 29, 37, 56, 68}  # 모듈 첫 슬라이드(M1은 표지가 대신한다)
 KIND_GLYPH = {"개념": "개념", "실습": "실습", "점검": "점검", "정리": "정리"}
 
 
@@ -944,6 +950,7 @@ ol>li:before{content:counter(c);position:absolute;left:0;top:.08em;width:1.22em;
   border:2px solid var(--tone);color:var(--tone-2);font-size:.74em;font-weight:800;text-align:center;line-height:1.08em;font-variant-numeric:tabular-nums}
 li ul,li ol{font-size:.86em;margin-top:.15em}
 li li:before{background:var(--ink-4)}
+a{color:var(--teal-2);text-decoration:underline;text-underline-offset:.15em;font-weight:600}
 code{font-family:var(--mono);font-size:.86em;background:var(--paper-3);padding:.04em .32em;border-radius:var(--r-s);color:var(--accent-2);
   word-break:normal;overflow-wrap:anywhere;font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
 pre{margin:0;white-space:pre-wrap;word-break:normal;overflow-wrap:anywhere;font-family:var(--mono);font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
@@ -1697,7 +1704,7 @@ def ov_cover(p):
     ]
     lis = "".join('<li>%s<div><span class="gn">%s</span>%s</div></li>' % (icons[i], "①②③"[i], inline(t.strip()))
                   for i, t in enumerate(items))
-    # 오른쪽: 하네스 고리(22번 도식의 축약형, 장식). 글자 없음
+    # 오른쪽: 하네스 고리(25번 도식의 축약형, 장식). 글자 없음
     d = D(330, 420, "모델을 둘러싼 하네스 고리 장식")
     cx, cy = 165, 210
     for r, op in ((150, .22), (112, .35), (74, .55)):
@@ -1781,7 +1788,7 @@ def ov_break(p):
             '<div class="col">%s</div></div>' % (mm * 60, t0, mm, cells, p["body"])), "brk"
 
 
-OVERRIDES = {1: ov_cover, 2: ov_map, 33: ov_break}
+OVERRIDES = {1: ov_cover, 2: ov_map, 36: ov_break}
 SLIDE_MIN = {}
 
 
@@ -1829,7 +1836,25 @@ def ov_3(p):
     return L_split(p, d.svg())
 
 
-# ---- 7: 모호한 요청 vs 구체적인 요청(네 요소 색 표시)
+# ---- 5: Docker로 쓰는 대안 (사라지는 문제 / 남는 조건 / 공유 폴더)
+def ov_5(p):
+    d = D(666, 420, "Docker 경로: 사라지는 설치 문제와 남는 조건, 내 PC의 work 폴더와 컨테이너의 /workspace만 공유")
+    d.text(165, 20, "사라지는 문제", 22, "tteal b")
+    d.text(501, 20, "남는 조건", 22, "t3 b")
+    for i, t in enumerate(["설치 명령 오류", "claude를 못 찾음(PATH)", "Git for Windows 설치", "Node.js·Firebase CLI 설치"]):
+        d.node(15, 44 + i * 58, 300, 46, t, "nteal", 20, "b")
+    for i, t in enumerate(["Docker Desktop 설치", "디스크 3GB · RAM 8GB", "학교 네트워크 차단은 그대로"]):
+        d.node(351, 44 + i * 58, 300, 46, t, "noch", 20, "b")
+    d.add('<line x1="333" y1="10" x2="333" y2="276" class="rule"/>')
+    d.node(15, 326, 240, 62, "내 PC\nwork 폴더", "n", 20, "b")
+    d.node(411, 326, 240, 62, "컨테이너\n/workspace", "nteal", 20, "b")
+    d.arrow(262, 344, 404, 344, "ln", "ink")
+    d.arrow(404, 372, 262, 372, "ln", "ink")
+    d.text(333, 310, "이 폴더만 공유", 19, "t2 m")
+    return L_split(p, d.svg())
+
+
+# ---- 10: 모호한 요청 vs 구체적인 요청(네 요소 색 표시)
 def ov_7(p):
     items = diag_items(p)
     bad = re.search(r'"(.+?)"', items[0]).group(1)
@@ -1846,7 +1871,7 @@ def ov_7(p):
     return L_split(p, vis, "r30")
 
 
-# ---- 8: 컨텍스트 표 + 플랜 모드 흐름
+# ---- 11: 컨텍스트 표 + 플랜 모드 흐름
 def ov_8(p):
     tbl = table_from(p["diag_rest"])
     items = ["요청", "계획만 제시\n(파일 안 고침)", "사람이 승인", "실제 작업"]
@@ -1860,7 +1885,7 @@ def ov_8(p):
     return L_split(p, vis)
 
 
-# ---- 11: 세 가지가 실습에 모두 들어 있었다
+# ---- 14: 세 가지가 실습에 모두 들어 있었다
 def ov_11(p):
     W = 1152
     d = D(W, 300, "구체적인 프롬프트, 플랜 모드, 컨텍스트 유지 세 단계와 첫 산출물")
@@ -1885,7 +1910,7 @@ def ov_11(p):
     return L_stack(p, d.svg()), "", 30
 
 
-# ---- 12: CLAUDE.md 구성
+# ---- 15: CLAUDE.md 구성
 def ov_12(p):
     d = D(520, 430, "CLAUDE.md의 네 구성 항목: 형식, 독자·어조, 반복 제약, 금지")
     d.rect(0, 0, 360, 290, "n2", 4)
@@ -1904,7 +1929,7 @@ def ov_12(p):
     return L_split(p, d.svg(), "r46")
 
 
-# ---- 15: 슬래시 커맨드 표 + 스킬 폴더 도식
+# ---- 18: 슬래시 커맨드 표 + 스킬 폴더 도식
 def ov_15(p):
     d = D(540, 250, "스킬 폴더 .claude/skills/quiz/SKILL.md가 /quiz 명령이 된다")
     d.node(0, 10, 360, 56, ".claude/skills/quiz/SKILL.md", "n", 20, "mono m")
@@ -1922,7 +1947,7 @@ def ov_15(p):
     return L_split(p, '<div class="panel">%s</div>' % p["diag"], "r50", left=left)
 
 
-# ---- 18: 권한 모드 표 + 경고 띠
+# ---- 21: 권한 모드 표 + 경고 띠
 def ov_18(p):
     tbl = table_from(p["diag_rest"])
     m = re.search(r"경고 띠:\s*\"?(.+?)\"?\s*$", p["diag_rest"], re.M)
@@ -1930,16 +1955,16 @@ def ov_18(p):
     return L_table(p, '<div class="modes">%s</div>' % tbl, warn), "", 30
 
 
-# ---- 19: 체크포인트 6문장
+# ---- 22: 체크포인트 6문장
 def ov_19(p):
     items = diag_items(p)
     rows = "".join('<li><i class="box"></i><span>%s</span></li>' % inline(t) for t in items)
     vis = ('<ol class="checks">%s</ol><div class="tally"><span>손 든 인원</span><i></i><span>/ 6문장</span></div>' % rows)
     return L_question(p, vis), "", 34
-OVERRIDES.update({3: ov_3, 7: ov_7, 8: ov_8, 11: ov_11, 12: ov_12, 15: ov_15, 18: ov_18, 19: ov_19})
+OVERRIDES.update({3: ov_3, 5: ov_5, 10: ov_7, 11: ov_8, 14: ov_11, 15: ov_12, 18: ov_15, 21: ov_18, 22: ov_19})
 
 
-# ---- 20: 하네스가 해 주는 일 (말로 요청 -> 팀 파일 생성 -> 실행·검수)
+# ---- 23: 하네스가 해 주는 일 (말로 요청 -> 팀 파일 생성 -> 실행·검수)
 def ov_20(p):
     W = 1152
     d = D(W, 250, "말로 요청하면 하네스가 팀 파일을 만들고, 만드는 쪽과 검수하는 쪽이 실행한다")
@@ -1970,7 +1995,7 @@ def ov_20(p):
     return L_stack(p, d.svg()), "", 30
 
 
-# ---- 24: 만드는 에이전트 -> 검수 에이전트(다른 눈)
+# ---- 27: 만드는 에이전트 -> 검수 에이전트(다른 눈)
 def ov_24(p):
     W = 666
     d = D(W, 128, "quiz-writer가 만든 문항을 quiz-checker가 별도 컨텍스트에서 읽기만 하며 검수한다")
@@ -1995,7 +2020,7 @@ def tree_rows(d, rows, x0, y0, step=34, fs=21):
     return out
 
 
-# ---- 25: 정리 - 폴더 트리와 구성 요소 한 줄 정의, 심화 선택
+# ---- 28: 정리 - 폴더 트리와 구성 요소 한 줄 정의, 심화 선택
 def ov_25(p):
     W = 1152
     d = D(W, 400, "mini-harness 폴더 트리와 에이전트·스킬·오케스트레이터의 한 줄 정의, 심화 선택 /harness:evolve")
@@ -2037,7 +2062,7 @@ def ov_25(p):
     return '<div class="body stack ovc"><div class="lead ovc">%s</div><div class="vis ovc">%s</div></div>' % (lead, d.svg()), "", 30
 
 
-# ---- 26: 하네스가 만든 폴더 지도 (트리 + 파일별 한 줄 정의)
+# ---- 29: 하네스가 만든 폴더 지도 (트리 + 파일별 한 줄 정의)
 def ov_26(p):
     W = 1152
     d = D(W, 340, "mini-harness 폴더 트리와 각 파일의 한 줄 정의. 파일 이름과 개수는 하네스가 정한다")
@@ -2062,14 +2087,14 @@ def ov_26(p):
     return ('<div class="body stack ovc"><div class="lead ovc">%s</div><div class="vis ovc">%s</div></div>' % (lead + defs, d.svg())), "", 30
 
 
-# ---- 31: 점검 - 체크박스 3개 카드(가로)
+# ---- 34: 점검 - 체크박스 3개 카드(가로)
 def ov_31(p):
     its = [re.sub(r"^\[[ xX]?\]\s*", "", t) for t in li_texts(p["body_raw"])]
     cards = "".join('<div class="card ckc"><i class="box"></i><p>%s</p></div>' % inline(t) for t in its)
     return ('<div class="body stack ovc"><div class="vis"><div class="cards c3 ckcs">%s</div></div></div>' % cards), "", 30
 
 
-# ---- 32: 정리 - 4칸 가로 흐름(요청 -> 읽기 -> 고치기 -> 실행) + 다음: Firebase(M6)
+# ---- 35: 정리 - 4칸 가로 흐름(요청 -> 읽기 -> 고치기 -> 실행) + 다음: Firebase(M6)
 def ov_32(p):
     W = 1152
     d = D(W, 130, "말로 요청, 생성 파일 읽기, 말로 고치기, 다시 실행해 비교로 이어지고 다음은 Firebase(M6)")
@@ -2107,7 +2132,7 @@ def chk_boxes(h):
     return h.replace("☐ ", '<i class="box"></i>').replace("☐", '<i class="box"></i>')
 
 
-# ---- 34: Firebase 기능 지도
+# ---- 37: Firebase 기능 지도
 def ov_34(p):
     rows = [l for l in p["diag_rest"].split("\n") if l.strip().startswith("|")]
     cells = [[c.strip() for c in r.strip().strip("|").split("|")] for r in rows][2:]
@@ -2133,7 +2158,7 @@ def ov_34(p):
     return L_stack(p, '<div class="fmap%s">%s</div>%s%s' % (" c3" if len(cells) == 6 else "", cards, legend, note)), "", 26
 
 
-# ---- 36: 프로젝트 -> 웹 앱 -> firebaseConfig, 공개 vs 비공개
+# ---- 39: 프로젝트 -> 웹 앱 -> firebaseConfig, 공개 vs 비공개
 def ov_36(p):
     W = 1152
     d = D(W, 150, "Firebase 프로젝트 안에 웹 앱을 등록하면 firebaseConfig가 나온다. 공개해도 되는 값과 비공개 자격증명의 구분")
@@ -2156,7 +2181,7 @@ def ov_36(p):
             % (d.svg(), p["body"], steps, "".join(ph), band(p["result"], p["stuck"]))), "", 26
 
 
-# ---- 37: Authentication 흐름 + 쓰는 상황
+# ---- 40: Authentication 흐름 + 쓰는 상황
 def ov_37(p):
     its = li_texts(p["body_raw"])
     W = 1152
@@ -2190,7 +2215,7 @@ def use_split(p, svg, ratio="r46"):
     return L_split(p, svg, ratio, left=h), "", 28
 
 
-# ---- 39: Firestore 데이터 구조
+# ---- 42: Firestore 데이터 구조
 def ov_39(p):
     d = D(640, 420, "Firestore 데이터 구조: 컬렉션 안에 문서, 문서 안에 필드")
     d.rect(20, 120, 330, 290, "n2", 4)
@@ -2217,7 +2242,7 @@ def ov_39(p):
     return use_split(p, d.svg())
 
 
-# ---- 41: Spark vs Blaze
+# ---- 44: Spark vs Blaze
 def ov_41(p):
     tbl = table_from(p["diag_rest"])
     tbl = tbl.replace("<td>사용 불가</td>", '<td class="na">사용 불가</td>')
@@ -2226,7 +2251,7 @@ def ov_41(p):
     return L_split(p, head + '<div class="ptbl">%s</div>' % tbl, "r30"), "", 28
 
 
-# ---- 43: Storage vs Firestore
+# ---- 46: Storage vs Firestore
 def ov_43(p):
     d = D(640, 400, "큰 파일은 Storage(객체 저장), 짧은 글은 Firestore(문서 DB)로")
     d.node(0, 40, 220, 84, "이미지·PDF·영상\n같은 파일", "n", 22, "b")
@@ -2249,7 +2274,7 @@ def ov_43(p):
     return use_split(p, d.svg())
 
 
-# ---- 44: Firestore / Storage / 올리지 않음
+# ---- 47: Firestore / Storage / 올리지 않음
 def ov_44(p):
     its = li_texts(p["body_raw"])
     qs = re.findall(r"([^?*]+\?)", its[0].replace("**", ""))
@@ -2261,7 +2286,7 @@ def ov_44(p):
     return L_question(q2, '<div class="qgrid">%s</div>' % rows), "", 34
 
 
-# ---- 46: Hosting 공개 주소
+# ---- 49: Hosting 공개 주소
 def ov_46(p):
     d = D(620, 400, "Hosting: PROJECT_ID.web.app 공개 주소로 정적 파일을 배포하며, 개인정보 파일은 올리지 않는다")
     d.rect(40, 70, 540, 250, "noch", 4)
@@ -2278,14 +2303,14 @@ def ov_46(p):
     return use_split(p, d.svg())
 
 
-# ---- 48: 배포 전에 사람이 꼭 볼 것 3가지
+# ---- 51: 배포 전에 사람이 꼭 볼 것 3가지
 def ov_48(p):
     vis = ('<div class="blanks"><div class="bl"><b>①</b><i></i></div><div class="bl"><b>②</b><i></i></div><div class="bl"><b>③</b><i></i></div>'
            '<span class="stamp big" title="사람이 확인하는 단계">확인</span></div>')
     return L_question(p, vis), "", 36
 
 
-# ---- 49: Cloud Functions 서버 측 호출
+# ---- 52: Cloud Functions 서버 측 호출
 def ov_49(p):
     d = D(660, 330, "학생 브라우저에는 키가 없고, Cloud Functions가 서버 측에 보관한 AI 키로 AI 서비스를 호출한다")
     d.rect(0, 70, 180, 150, "n", 6)
@@ -2309,7 +2334,7 @@ def ov_49(p):
     return L_split(p, d.svg(), "r38"), "", 28
 
 
-# ---- 51: 상황 카드 4장
+# ---- 54: 상황 카드 4장
 def ov_51(p):
     cards = diag_items(p)
     ans = re.search(r"내 답 칸:\s*`([^`]+)`", p["diag_rest"])
@@ -2317,7 +2342,7 @@ def ov_51(p):
     return L_practice(p, main='<div class="grp">%s</div><div class="grp">%s</div>' % (h, p["prompt"])), "", 28
 
 
-# ---- 52: 설정 체크리스트
+# ---- 55: 설정 체크리스트
 def ov_52(p):
     tbl = chk_boxes(table_from(p["diag_rest"]))
     m = re.search(r"하단:\s*(.+)$", p["diag_rest"], re.M)
@@ -2325,12 +2350,12 @@ def ov_52(p):
     return L_table(p, '<div class="chkt">%s</div>' % tbl, after), "", 28
 
 
-# ---- 53: 프로젝트 흐름 5단계 + 슬라이드 범위 + 폴더 트리(출처 구분) + 안전 원칙
+# ---- 56: 프로젝트 흐름 5단계 + 슬라이드 범위 + 폴더 트리(출처 구분) + 안전 원칙
 def ov_53(p):
     W = 1152
     d = D(W, 410, "프로젝트 흐름 5단계: 단원 명세, 하네스 구성, 수업 슬라이드, 워크북 배포, 점검·공유. 작업 폴더 unit-project의 파일 출처와 안전 원칙 3가지")
     bw, gap = 204, 33
-    rngs = ["54", "55", "56–57", "58–62", "63–64"]
+    rngs = ["57", "58", "59–60", "61–65", "66–67"]
     m = re.search(r"칸 아래에 슬라이드 번호 범위:\s*(.+?)\.\s", p["diag_raw"])
     if m:
         got = [x.strip() for x in re.split(r"[①②③④⑤]", m.group(1)) if x.strip()]
@@ -2369,7 +2394,7 @@ def ov_53(p):
     return L_stack(p, d.svg()), "", 28
 
 
-# ---- 58: 사람 / Claude Code 역할 분담 두 열 카드 + 결과 띠
+# ---- 61: 사람 / Claude Code 역할 분담 두 열 카드 + 결과 띠
 def ov_58(p):
     W, H = 760, 470
     d = D(W, H, "역할 분담: 내가 하는 일 3가지에서 Claude Code가 하는 일 5가지로 이어지고, 결과는 배포 주소")
@@ -2391,7 +2416,7 @@ def ov_58(p):
     return L_split(p, d.svg(), "r46"), "", 28
 
 
-# ---- 57, 62: 점검 4가지(① ② ③ ④ 점검표) + 선택 프롬프트 + 막힐 때
+# ---- 60, 65: 점검 4가지(① ② ③ ④ 점검표) + 선택 프롬프트 + 막힐 때
 def ov_check4(p):
     its = li_texts(p["body_raw"])
     lead = its[0] if its else ""
@@ -2407,7 +2432,7 @@ def ov_check4(p):
     return L_split(p, right, "r46", left=left) + band(None, p["stuck"]), "", 26
 
 
-# ---- 65: 체크리스트 6칸
+# ---- 68: 체크리스트 6칸
 def ov_65(p):
     its = li_texts(p["body_raw"])
     boxes = []
@@ -2419,7 +2444,7 @@ def ov_65(p):
             % (inline(its[0]), grid, note, band(p["result"], p["stuck"]))), "", 28
 
 
-# ---- 66: 안티패턴 4가지
+# ---- 69: 안티패턴 4가지
 def ov_66(p):
     its = li_texts(p["body_raw"])
     cards = ""
@@ -2429,7 +2454,7 @@ def ov_66(p):
     return '<div class="body stack ovc"><div class="vis"><div class="cards c2 g2">%s</div></div></div>%s' % (cards, band(p["result"], p["stuck"])), "", 32
 
 
-# ---- 67: 자주 묻는 질문 4가지
+# ---- 70: 자주 묻는 질문 4가지
 def ov_67(p):
     its = li_texts(p["body_raw"])
     m = re.search(r'"(Blaze가 필요한 것:[^"]+)"', p["diag_intro"])
@@ -2441,7 +2466,7 @@ def ov_67(p):
     return '<div class="body stack ovc"><div class="vis"><div class="cards c2 g2">%s</div></div></div>%s' % (cards, band(p["result"], p["stuck"])), "", 32
 
 
-# ---- 68: 참고 자료와 다음 걸음
+# ---- 71: 참고 자료와 다음 걸음
 def ov_68(p):
     its = li_texts(p["body_raw"])
     refs = []
@@ -2463,7 +2488,7 @@ def ov_68(p):
             % (left, vis, band(p["result"], p["stuck"]))), "", 28
 
 
-# ---- 58: 터미널 로그인 한 번 -> 컴퓨터에 저장 -> Claude Code 실행 -> 내 승인
+# ---- 61: 터미널 로그인 한 번 -> 컴퓨터에 저장 -> Claude Code 실행 -> 내 승인
 def ov_login(p):
     W = 1152
     d = D(W, 330, "터미널 로그인 원리: 내가 한 번 로그인하면 컴퓨터에 저장되고, Claude Code가 같은 로그인으로 명령을 실행하며, 명령마다 내가 승인한다. 예: Firebase 배포, GitHub 올리기")
@@ -2491,7 +2516,7 @@ def ov_login(p):
     return L_stack(p, d.svg()), "", 30
 
 
-# ---- 64: 패키지 한 장 회고 카드
+# ---- 67: 패키지 한 장 회고 카드
 def ov_64(p):
     made = ["<code>unit-spec.md</code>", "하네스 팀 <code>.claude/</code>", "<code>slides.html</code>",
             "<code>workbook/</code>", "<code>firestore.rules</code>"]
@@ -2507,12 +2532,12 @@ def ov_64(p):
     return L_stack(p, card), "", 30
 
 
-OVERRIDES.update({20: ov_20, 24: ov_24, 25: ov_25, 26: ov_26, 31: ov_31, 32: ov_32,
-                  34: ov_34, 35: ov_console, 36: ov_36, 37: ov_37, 38: ov_console, 39: ov_39, 40: ov_console,
-                  41: ov_41, 42: ov_console, 43: ov_43, 44: ov_44, 45: ov_console, 46: ov_46, 47: ov_console,
-                  48: ov_48, 49: ov_49, 50: ov_console, 51: ov_51, 52: ov_52,
-                  53: ov_53, 57: ov_check4, 58: ov_login, 63: ov_check4, 64: ov_64,
-                  65: ov_65, 66: ov_66, 67: ov_67, 68: ov_68})
+OVERRIDES.update({23: ov_20, 27: ov_24, 28: ov_25, 29: ov_26, 34: ov_31, 35: ov_32,
+                  37: ov_34, 38: ov_console, 39: ov_36, 40: ov_37, 41: ov_console, 42: ov_39, 43: ov_console,
+                  44: ov_41, 45: ov_console, 46: ov_43, 47: ov_44, 48: ov_console, 49: ov_46, 50: ov_console,
+                  51: ov_48, 52: ov_49, 53: ov_console, 54: ov_51, 55: ov_52,
+                  56: ov_53, 60: ov_check4, 61: ov_login, 66: ov_check4, 67: ov_64,
+                  68: ov_65, 69: ov_66, 70: ov_67, 71: ov_68})
 
 
 def main():
@@ -2522,8 +2547,8 @@ def main():
         slides += parse_file(SRC / ("02_writer_%s_slides.md" % code))
     slides.sort(key=lambda s: s["n"])
     nums = [s["n"] for s in slides]
-    if nums != list(range(1, 69)):
-        sys.exit("슬라이드 번호가 1-68 연속이 아닙니다: %s" % nums)
+    if nums != list(range(1, 72)):
+        sys.exit("슬라이드 번호가 1-71 연속이 아닙니다: %s" % nums)
     total = len(slides)
     for s in slides:
         SLIDE_MIN[s["n"]] = minutes_of(field_text(s, "노트"))

@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """하네스 엔지니어링 교원연수 인쇄용 교재판 조립기.
 
-입력 : _workspace/deck/02_writer_M1..M5,M6,M7,MW_slides.md (슬라이드 1-68), 01_designer_curriculum.md(모듈 학습 목표)
+입력 : _workspace/deck/02_writer_M1..M5,M6,M7,MW_slides.md (슬라이드 1-71), 01_designer_curriculum.md(모듈 학습 목표)
 출력 : output/하네스엔지니어링_교원연수_교재.html (A4 세로, 외부 의존 없음)
        output/하네스엔지니어링_교원연수_교재.pdf  (Chrome이 있을 때만; 목차 쪽 번호 계산에도 쓴다)
 사용 : python3 output/build_handout.py [--no-pdf]
@@ -342,6 +342,7 @@ strong,b{font-weight:700}
 .k-점검 .kind,.kind.k-점검{border-style:double;border-width:2.2pt;color:#111;background:#fff}
 .k-정리 .kind,.kind.k-정리{background:#222;border-color:#222;color:#fff}
 .tag{font-size:7.5pt;line-height:1.5;color:var(--dim);border:.5pt solid #999;border-radius:1mm;padding:0 1.6mm;white-space:nowrap}
+a{color:var(--teal);text-decoration:underline}
 .badges .chk{margin:0}
 .chk{display:inline-block;font-family:var(--sans);font-size:6.8pt;font-weight:600;color:var(--gold);border-bottom:.5pt dotted var(--gold);line-height:1.3;vertical-align:super;white-space:nowrap;margin:0 .15em;letter-spacing:0}
 .sec{margin:2.4mm 0}
@@ -491,7 +492,7 @@ def page_map(pdf_path):
     reader = PdfReader(str(pdf_path))
     for i, p in enumerate(reader.pages, 1):
         txt = p.extract_text() or ""
-        for m in re.finditer(r"슬라이드\s*(\d+)\s*/\s*68", txt):
+        for m in re.finditer(r"슬라이드\s*(\d+)\s*/\s*71", txt):
             pages.setdefault(int(m.group(1)), i)
         for m in re.finditer(r"MODULE\s+(M\d|MW)", txt):
             pages.setdefault("mod-" + m.group(1), i)
@@ -504,8 +505,8 @@ def main():
         slides += bd.parse_file(bd.SRC / ("02_writer_%s_slides.md" % code))
     slides.sort(key=lambda s: s["n"])
     nums = [s["n"] for s in slides]
-    if nums != list(range(1, 69)):
-        sys.exit("슬라이드 번호가 1-68 연속이 아닙니다: %s" % nums)
+    if nums != list(range(1, 72)):
+        sys.exit("슬라이드 번호가 1-71 연속이 아닙니다: %s" % nums)
     for s in slides:  # 분 계산(모듈 도입 쪽에서 합계를 쓴다)
         s["min"] = bd.minutes_of(bd.field_text(s, "노트"))
     mods = []

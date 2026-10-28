@@ -1,0 +1,14 @@
+services:
+  claude:
+    build: .
+    image: claude-workshop
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./work:/workspace                     # 내 PC의 work 폴더 = 컨테이너의 /workspace
+      - claude-config:/home/node/.claude      # Claude Code 로그인·설정 보관
+      - tool-config:/home/node/.config        # Firebase·GitHub CLI 로그인 보관
+
+volumes:
+  claude-config:
+  tool-config:

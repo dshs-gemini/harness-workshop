@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>클로드 코드를 Docker로 쓰기 - 보충 자료</title>
+<style>
+:root{
+  --bg:#f8f2e4;
+  --bg2:#f1e7cf;
+  --bg3:#ecdfc0;
+  --bg-code:#241d15;
+  --border:#ddc9a0;
+  --border-soft:#e9ddc0;
+  --text:#2a2314;
+  --text-dim:#4a3f28;
+  --text-faint:#6f5f42;
+  --on-dark:#e8dcc0;
+  --on-dark-dim:#a89878;
+  --accent:#b0402c;
+  --accent-bright:#d97a5c;
+  --accent-soft:rgba(176,64,44,.10);
+  --accent-border:rgba(176,64,44,.38);
+  --blue:#356e67;
+  --blue-bright:#5fa89d;
+  --blue-soft:rgba(53,110,103,.10);
+  --green:#4f7a3d;
+  --green-bright:#7fb562;
+  --green-soft:rgba(79,122,61,.10);
+  --yellow:#7f5e1c;
+  --yellow-bright:#c99a3f;
+  --yellow-soft:rgba(127,94,28,.12);
+  --red:#9c2f2f;
+  --red-soft:rgba(156,47,47,.10);
+  --purple:#6a4b7a;
+  --purple-soft:rgba(106,75,122,.10);
+  --radius:10px;
+  --sidebar-w:300px;
+  --content-max:920px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  background-color:var(--bg);
+  color:var(--text);
+  font-family:"Pretendard","Apple SD Gothic Neo","Segoe UI",-apple-system,BlinkMacSystemFont,sans-serif;
+  font-size:15.5px;
+  line-height:1.75;
+  -webkit-font-smoothing:antialiased;
+}
+code, pre, .mono{
+  font-family:"JetBrains Mono","SF Mono",Consolas,"Liberation Mono",monospace;
+}
+a{color:var(--blue); text-decoration:none;}
+a:hover{text-decoration:underline;}
+
+/* ---------- layout ---------- */
+.app{display:flex; min-height:100vh;}
+.sidebar{
+  position:fixed; top:0; left:0; bottom:0; width:var(--sidebar-w);
+  background-color:var(--bg2);
+  border-right:1px solid var(--border);
+  overflow-y:auto; padding:22px 0 40px;
+  z-index:40;
+}
+.sidebar::-webkit-scrollbar{width:8px;}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border); border-radius:4px;}
+.side-brand{
+  padding:0 22px 18px; margin-bottom:10px; border-bottom:1px solid var(--border-soft);
+}
+.side-brand .tag{
+  display:inline-block; font-size:11px; letter-spacing:.06em; color:var(--accent);
+  background:var(--accent-soft); border:1px solid var(--accent-border);
+  padding:3px 8px; border-radius:20px; margin-bottom:10px; font-weight:600;
+}
+.side-brand h1{font-size:16px; margin:0 0 4px; line-height:1.4; color:var(--text);}
+.side-brand p{font-size:12.5px; color:var(--text-dim); margin:0;}
+.progress-wrap{padding:14px 22px 4px;}
+.progress-bar{height:4px; background:var(--bg3); border-radius:2px; overflow:hidden;}
+.progress-fill{height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--purple)); transition:width .15s ease;}
+.progress-label{font-size:11px; color:var(--text-faint); margin-top:6px;}
+
+nav.toc{padding:8px 12px;}
+.toc-track{margin-top:16px;}
+.toc-track-label{
+  font-size:11px; font-weight:700; letter-spacing:.08em; color:var(--text-faint);
+  padding:4px 10px; text-transform:uppercase;
+}
+.toc a{
+  display:flex; align-items:center; gap:8px;
+  padding:7px 10px; border-radius:8px; font-size:13.2px; color:var(--text-dim);
+  white-space:normal; line-height:1.4;
+}
+.toc a:hover{background:var(--bg3); color:var(--text); text-decoration:none;}
+.toc a.active{background:var(--accent-soft); color:var(--accent); font-weight:600;}
+.toc a .kind-dot{width:6px; height:6px; border-radius:50%; flex:none; background:var(--text-faint);}
+.toc a.kind-concept .kind-dot{background:var(--blue);}
+.toc a.kind-practice .kind-dot{background:var(--green);}
+.toc a.kind-check .kind-dot{background:var(--purple);}
+
+.mobile-topbar{
+  display:none; position:sticky; top:0; z-index:50; align-items:center; gap:12px;
+  background:var(--bg2); border-bottom:1px solid var(--border); padding:12px 16px;
+}
+.mobile-topbar button{
+  background:var(--bg3); border:1px solid var(--border); color:var(--text);
+  border-radius:8px; padding:8px 10px; font-size:14px; cursor:pointer;
+}
+.mobile-topbar strong{font-size:14px;}
+
+main{
+  margin-left:var(--sidebar-w);
+  flex:1; min-width:0;
+  padding:48px 40px 120px;
+}
+.content-inner{max-width:var(--content-max); margin:0 auto;}
+
+/* ---------- typography ---------- */
+h2.section-title{
+  font-size:26px; margin:0 0 6px; color:var(--text); scroll-margin-top:24px;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+h3{font-size:19px; margin:30px 0 10px; color:var(--text);}
+h4{font-size:16px; margin:22px 0 8px; color:var(--text);}
+p{margin:0 0 14px; color:var(--text-dim);}
+ul,ol{margin:0 0 14px; padding-left:22px; color:var(--text-dim);}
+li{margin-bottom:6px;}
+strong{color:var(--text);}
+.section-sub{color:var(--text-dim); font-size:14px; margin:0 0 22px;}
+.section{padding-top:26px; padding-bottom:8px; border-top:1px solid var(--border-soft); margin-top:26px;}
+.section:first-of-type{border-top:none; margin-top:0;}
+
+.badge{
+  display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700;
+  padding:4px 10px; border-radius:20px; letter-spacing:.02em; flex:none;
+}
+.badge-concept{background:var(--blue-soft); color:var(--blue); border:1px solid rgba(53,110,103,.35);}
+.badge-practice{background:var(--green-soft); color:var(--green); border:1px solid rgba(79,122,61,.35);}
+.badge-check{background:var(--purple-soft); color:var(--purple); border:1px solid rgba(106,75,122,.35);}
+.badge-track{background:var(--accent-soft); color:var(--accent); border:1px solid var(--accent-border);}
+
+.meta-row{display:flex; gap:16px; flex-wrap:wrap; font-size:12.5px; color:var(--text-faint); margin:10px 0 20px;}
+.meta-row span{display:flex; align-items:center; gap:6px;}
+
+/* ---------- callouts ---------- */
+.callout{
+  border-radius:var(--radius); border:1px solid; padding:16px 18px; margin:18px 0;
+  font-size:14.5px;
+}
+.callout p:last-child{margin-bottom:0;}
+.callout .callout-title{
+  display:flex; align-items:center; gap:8px; font-weight:700; margin-bottom:8px; font-size:13.5px;
+  letter-spacing:.02em;
+}
+.callout-concept{background:var(--blue-soft); border-color:rgba(53,110,103,.32); }
+.callout-concept .callout-title{color:var(--blue);}
+.callout-tip{background:var(--green-soft); border-color:rgba(79,122,61,.32);}
+.callout-tip .callout-title{color:var(--green);}
+.callout-warn{background:var(--yellow-soft); border-color:rgba(127,94,28,.35);}
+.callout-warn .callout-title{color:var(--yellow);}
+.callout-danger{background:var(--red-soft); border-color:rgba(156,47,47,.35);}
+.callout-danger .callout-title{color:var(--red);}
+.callout-quote{background:var(--bg3); border-color:var(--border);}
+.callout-quote .callout-title{color:var(--text-dim);}
+
+/* ---------- code / terminal ---------- */
+.code-block{position:relative; margin:16px 0; border-radius:var(--radius); overflow:hidden; border:1px solid var(--border);}
+.code-block .cb-head{
+  display:flex; align-items:center; justify-content:space-between; background:var(--bg3);
+  padding:8px 14px; font-size:12px; color:var(--text-faint); border-bottom:1px solid var(--border);
+}
+.code-block pre{margin:0; padding:16px 18px; background:var(--bg-code); overflow-x:auto;}
+.code-block code{font-size:13.3px; color:var(--on-dark); white-space:pre;}
+.copy-btn{
+  background:var(--bg2); border:1px solid var(--border); color:var(--text-dim);
+  font-size:11.5px; padding:4px 9px; border-radius:6px; cursor:pointer; font-family:inherit;
+}
+.copy-btn:hover{color:var(--text); border-color:var(--text-faint);}
+.copy-btn.copied{color:var(--green); border-color:var(--green);}
+
+.terminal{margin:16px 0; border-radius:var(--radius); overflow:hidden; border:1px solid var(--border); background:var(--bg-code);}
+.terminal-head{display:flex; align-items:center; gap:8px; padding:9px 14px; background:#2f2519; border-bottom:1px solid rgba(0,0,0,.3);}
+.terminal-head .dot{width:10px; height:10px; border-radius:50%;}
+.terminal-head .dot.r{background:#f85149;} .terminal-head .dot.y{background:#d29922;} .terminal-head .dot.g{background:#3fb950;}
+.terminal-head span.title{margin-left:6px; font-size:11.5px; color:var(--on-dark-dim);}
+.terminal pre{margin:0; padding:16px 18px; overflow-x:auto;}
+.terminal code{font-size:13.3px; line-height:1.85; color:var(--on-dark);}
+.term-prompt{color:var(--green-bright);}
+.term-comment{color:var(--on-dark-dim);}
+.term-out{color:var(--on-dark-dim);}
+.term-you{color:var(--yellow-bright);}
+.term-claude{color:var(--blue-bright);}
+
+.os-tabs{display:flex; gap:6px; padding:10px 14px 0; background:var(--bg3);}
+.os-tab{
+  background:transparent; border:1px solid var(--border); color:var(--text-dim);
+  font-size:11.5px; padding:5px 12px; border-radius:6px 6px 0 0; cursor:pointer; font-family:inherit;
+  border-bottom:none; position:relative; top:1px;
+}
+.os-tab.active{background:var(--bg-code); color:var(--accent-bright); border-color:var(--border); font-weight:600;}
+.os-panel{display:none;}
+.os-panel.active{display:block;}
+
+/* ---------- practice / file box ---------- */
+.practice-shell{
+  border:1px solid var(--green-soft); border-left:3px solid var(--green);
+  background:linear-gradient(180deg, rgba(79,122,61,.07), transparent 120px);
+  border-radius:var(--radius); padding:20px 22px; margin:18px 0 26px;
+}
+.practice-shell .ps-label{
+  display:flex; align-items:center; gap:8px; color:var(--green); font-weight:700; font-size:13px; margin-bottom:10px;
+}
+.step{display:flex; gap:14px; margin:16px 0;}
+.step-num{
+  flex:none; width:26px; height:26px; border-radius:50%; background:var(--bg3); border:1px solid var(--border);
+  display:flex; align-items:center; justify-content:center; font-size:12.5px; font-weight:700; color:var(--accent);
+  margin-top:1px;
+}
+.step-body{flex:1; min-width:0;}
+.step-body p:last-child{margin-bottom:0;}
+
+.file-box{border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; margin:16px 0;}
+.file-box .fb-head{
+  display:flex; align-items:center; gap:8px; background:var(--bg3); padding:8px 14px; font-size:12.5px; color:var(--text-dim);
+  border-bottom:1px solid var(--border);
+}
+.file-box .fb-head svg{flex:none;}
+.file-box pre{margin:0; padding:16px 18px; background:var(--bg-code); overflow-x:auto;}
+.file-box code{font-size:13.3px; color:var(--on-dark);}
+
+table{width:100%; border-collapse:collapse; margin:16px 0; font-size:13.8px;}
+th,td{border:1px solid var(--border); padding:9px 12px; text-align:left; vertical-align:top;}
+th{background:var(--bg3); color:var(--text); font-weight:700; font-size:12.5px;}
+td{color:var(--text-dim);}
+tr:nth-child(even) td{background:rgba(0,0,0,.025);}
+
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:16px 0;}
+.card{border:1px solid var(--border); border-radius:var(--radius); padding:16px 18px; background:var(--bg2);}
+.card h4{margin-top:0;}
+.card.bad{border-color:rgba(156,47,47,.3); background:var(--red-soft);}
+.card.good{border-color:rgba(79,122,61,.3); background:var(--green-soft);}
+.card .card-tag{font-size:11px; font-weight:700; letter-spacing:.04em; margin-bottom:8px; display:block;}
+.card.bad .card-tag{color:var(--red);}
+.card.good .card-tag{color:var(--green);}
+
+.pattern-grid{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:18px 0;}
+.pattern-card{border:1px solid var(--border); border-radius:var(--radius); padding:16px; background:var(--bg2);}
+.pattern-card .pnum{
+  display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:6px;
+  background:var(--accent-soft); color:var(--accent); font-weight:700; font-size:12.5px; margin-bottom:8px;
+}
+.pattern-card h4{margin:0 0 6px;}
+.pattern-card p{font-size:13.6px; margin-bottom:8px;}
+.pattern-card .puse{font-size:12.5px; color:var(--text-faint);}
+
+.worksheet{border:1px dashed var(--border); border-radius:var(--radius); padding:18px 20px; margin:16px 0; background:var(--bg2);}
+.worksheet label{display:block; font-size:12.8px; color:var(--text-dim); margin:14px 0 6px; font-weight:600;}
+.worksheet label:first-child{margin-top:0;}
+.worksheet textarea, .worksheet input[type=text]{
+  width:100%; background:var(--bg-code); border:1px solid var(--border); border-radius:8px; color:var(--on-dark);
+  padding:10px 12px; font-family:inherit; font-size:13.8px; resize:vertical;
+}
+.worksheet textarea::placeholder, .worksheet input[type=text]::placeholder{color:var(--on-dark-dim); opacity:1;}
+.worksheet textarea{min-height:56px;}
+
+.checklist{list-style:none; padding:0; margin:16px 0;}
+.checklist li{
+  display:flex; gap:10px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--border-soft);
+  color:var(--text-dim);
+}
+.checklist li input{margin-top:4px; flex:none; width:16px; height:16px; accent-color:var(--accent);}
+
+.faq-item{border:1px solid var(--border); border-radius:var(--radius); margin:12px 0; overflow:hidden;}
+.faq-q{
+  padding:14px 18px; cursor:pointer; display:flex; justify-content:space-between; align-items:center;
+  font-weight:600; font-size:14.5px; background:var(--bg2);
+}
+.faq-q .chev{transition:transform .15s ease; color:var(--text-faint);}
+.faq-item.open .faq-q .chev{transform:rotate(180deg);}
+.faq-a{max-height:0; overflow:hidden; transition:max-height .2s ease;}
+.faq-item.open .faq-a{max-height:600px;}
+.faq-a-inner{padding:2px 18px 16px; color:var(--text-dim); font-size:14px;}
+
+.refs{list-style:none; padding:0; margin:16px 0;}
+.refs li{padding:12px 0; border-bottom:1px solid var(--border-soft); font-size:13.8px;}
+.refs .ref-type{color:var(--text-faint); font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; margin-right:8px;}
+
+hr.div{border:none; border-top:1px solid var(--border-soft); margin:34px 0;}
+
+.kbd{display:inline-block; padding:2px 7px; background:var(--bg3); border:1px solid var(--border); border-bottom-width:2px; border-radius:5px; font-size:12px; font-family:inherit;}
+
+footer.doc-footer{margin-top:70px; padding-top:24px; border-top:1px solid var(--border-soft); color:var(--text-faint); font-size:12.5px;}
+
+@media (max-width:900px){
+  .sidebar{transform:translateX(-100%); transition:transform .2s ease; box-shadow:0 0 40px rgba(0,0,0,.5);}
+  .sidebar.open{transform:translateX(0);}
+  main{margin-left:0; padding:28px 18px 100px;}
+  .mobile-topbar{display:flex;}
+  .pattern-grid{grid-template-columns:1fr;}
+  .grid2{grid-template-columns:1fr;}
+}
+@media (min-width:901px){
+  .mobile-topbar{display:none;}
+}
+</style>
+</head>
+<body>
+
+<div class="mobile-topbar">
+  <button id="menuToggle" aria-label="메뉴 열기">☰</button>
+  <strong>클로드 코드를 Docker로 쓰기</strong>
+</div>
+
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="side-brand">
+      <span class="tag">SUPPLEMENT</span>
+      <h1>클로드 코드를<br>Docker로 쓰기</h1>
+      <p>Windows 설치 오류를 피하는 대체 경로</p>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-label" id="progressLabel">0% 진행</div>
+    </div>
+    <nav class="toc" id="toc">
+      <a href="#intro" class="kind-check"><span class="kind-dot"></span>이 자료의 사용법</a>
+
+      <div class="toc-track">
+        <div class="toc-track-label">이해하기</div>
+        <a href="#dk-why" class="kind-concept"><span class="kind-dot"></span>1. Docker로 해결되는 것과 남는 것</a>
+        <a href="#dk-options" class="kind-concept"><span class="kind-dot"></span>2. 방법 비교와 선택</a>
+      </div>
+
+      <div class="toc-track">
+        <div class="toc-track-label">따라 하기</div>
+        <a href="#dk-install" class="kind-practice"><span class="kind-dot"></span>3. Docker Desktop 설치</a>
+        <a href="#dk-kit" class="kind-practice"><span class="kind-dot"></span>4. 실습 키트 만들기와 빌드</a>
+        <a href="#dk-run" class="kind-practice"><span class="kind-dot"></span>5. 실행과 로그인</a>
+        <a href="#dk-files" class="kind-concept"><span class="kind-dot"></span>6. 파일과 로그인은 어디에 남나</a>
+        <a href="#dk-workshop" class="kind-practice"><span class="kind-dot"></span>7. 연수 실습에 이어 쓰기</a>
+      </div>
+
+      <div class="toc-track">
+        <div class="toc-track-label">운영과 점검</div>
+        <a href="#dk-security" class="kind-concept"><span class="kind-dot"></span>8. 안전하게 쓰는 법</a>
+        <a href="#dk-trouble" class="kind-check"><span class="kind-dot"></span>9. 막혔을 때</a>
+        <a href="#dk-alt" class="kind-concept"><span class="kind-dot"></span>10. 다른 방법: sbx, VS Code, WSL</a>
+        <a href="#dk-instructor" class="kind-practice"><span class="kind-dot"></span>11. 강사용 사전 준비</a>
+        <a href="#dk-checklist" class="kind-check"><span class="kind-dot"></span>12. 체크리스트와 참고 자료</a>
+      </div>
+    </nav>
+  </aside>
+
+  <main>
+    <div class="content-inner" id="content">
+
+<section class="section" id="intro" style="border-top:none; margin-top:0;">
+  <span class="badge badge-track">보충 자료</span>
+  <h2 class="section-title" style="margin-top:14px;">클로드 코드를 Docker로 쓰기</h2>
+  <p class="section-sub">Windows에서 PowerShell·CMD 설치 명령이 막히거나 오류가 날 때, 설치 대신 &lsquo;컨테이너&rsquo; 안에서 클로드 코드를 실행하는 방법입니다. 기본 가이드의 1.2절(설치와 첫 대화)을 대신하는 경로로 쓸 수 있습니다.</p>
+
+  <div class="meta-row">
+    <span>⏱ 약 30~40분 (이미지 내려받기·빌드 대기 포함)</span>
+    <span>👤 대상: 네이티브 설치가 막힌 Windows 사용자, 환경을 통일하려는 강사</span>
+    <span>💻 준비물: Windows 10/11 노트북, 인터넷, 클로드 계정</span>
+  </div>
+
+  <h3>한 줄 요약</h3>
+  <p>클로드 코드를 Windows에 직접 설치하는 대신, <strong>Docker Desktop</strong>을 한 번 설치하고 <strong>Dockerfile + compose.yaml</strong> 두 파일로 만든 리눅스 환경에서 <code>claude</code>를 실행합니다. 클로드 코드, Git, Node.js, Firebase CLI가 이미지 안에 이미 들어 있으므로 설치 스크립트 오류·PATH·Git Bash 문제가 생길 자리가 없습니다.</p>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">검증 범위 (먼저 읽어 주세요)</div>
+    <p>이 자료의 Dockerfile·compose.yaml은 <strong>macOS(Apple Silicon)의 Docker Desktop 29.4에서 직접 빌드하고 실행해 확인</strong>했습니다. 확인한 내용: 이미지 빌드, <code>claude --version</code>(2.1.312), Git·gh·Firebase CLI 동작, <code>work</code> 폴더 파일 공유, 컨테이너를 지워도 로그인 폴더 유지, 이미지 저장·불러오기. <strong>Windows 실기와 클로드 계정 로그인 완료까지는 확인하지 못했습니다.</strong> 해당 부분은 본문에 <span class="kbd">확인필요</span>로 표시했으니, 연수 전에 Windows 노트북 한 대로 리허설해 주세요.</p>
+  </div>
+
+  <div class="callout callout-tip">
+    <div class="callout-title">이 문서를 읽는 법</div>
+    <p>왼쪽 사이드바의 <span style="color:var(--blue);">●</span> 파란 점은 <strong>이해하기</strong>, <span style="color:var(--green);">●</span> 초록 점은 <strong>따라 하기</strong>, <span style="color:var(--purple);">●</span> 보라 점은 <strong>점검</strong>입니다. 코드 블록의 <span class="kbd">복사</span> 버튼으로 내용을 그대로 복사할 수 있습니다. 같은 폴더의 <code>docker-kit/</code>에는 본문과 똑같은 파일(Dockerfile, compose.yaml)이 들어 있습니다.</p>
+  </div>
+</section>
+
+<section class="section" id="dk-why">
+  <span class="badge badge-concept">이해하기</span>
+  <h2 class="section-title">1. Docker로 해결되는 것과 남는 것</h2>
+  <p class="section-sub">Docker는 설치 문제를 없애는 것이 아니라, 흩어진 문제를 &lsquo;Docker Desktop 설치 한 번&rsquo;으로 모아 줍니다. 무엇이 사라지고 무엇이 남는지 먼저 정확히 봅니다.</p>
+
+  <h3>컨테이너가 하는 일</h3>
+  <p>컨테이너는 내 PC 안에서 돌아가는 <strong>작은 리눅스 환경</strong>입니다. 클로드 코드는 그 안에서 실행되고, 내 PC에서는 터미널 창으로 그 화면을 봅니다. 내 PC의 폴더 중 <strong>지정한 폴더 하나(<code>work</code>)만</strong> 컨테이너와 공유됩니다. 클로드 코드가 만든 파일은 그 폴더에 그대로 나타납니다.</p>
+
+  <table>
+    <thead><tr><th style="white-space:nowrap;">네이티브 설치에서 겪는 문제</th><th>Docker 방식에서는</th></tr></thead>
+    <tbody>
+      <tr><td><code>irm</code>·<code>&amp;&amp;</code> 인식 오류, 설치 스크립트가 HTML을 돌려줌, <code>403</code>, TLS 오류</td><td><strong>사라짐.</strong> 설치 스크립트를 쓰지 않고 Dockerfile이 npm으로 설치합니다. (이미지를 만드는 동안은 인터넷이 필요합니다.)</td></tr>
+      <tr><td><code>claude</code>가 인식되지 않음(PATH)</td><td><strong>사라짐.</strong> 이미지 안에서 PATH가 이미 맞춰져 있습니다.</td></tr>
+      <tr><td>Git for Windows·Git Bash 필요</td><td><strong>사라짐.</strong> 이미지에 <code>git</code>이 들어 있어 하네스 플러그인 설치(<code>/plugin marketplace add</code>)도 그대로 됩니다.</td></tr>
+      <tr><td>Node.js·Firebase CLI·GitHub CLI를 따로 설치</td><td><strong>사라짐.</strong> 모두 이미지에 포함되어 있습니다.</td></tr>
+      <tr><td>사람마다 다른 환경 때문에 같은 명령이 다르게 동작</td><td><strong>사라짐.</strong> 모두 같은 이미지에서 시작합니다.</td></tr>
+      <tr><td>Docker Desktop 설치(WSL 2·가상화·관리자 권한)</td><td><strong>새로 생김.</strong> 이 문제가 Docker 방식의 유일한 큰 관문입니다.</td></tr>
+      <tr><td>학교 네트워크가 외부 사이트를 차단</td><td><strong>남음.</strong> Docker Hub, npm, claude.ai 접속이 막히면 똑같이 실패합니다. (9절, 11절 참고)</td></tr>
+      <tr><td>디스크·메모리 부담</td><td><strong>늘어남.</strong> 이미지 약 1.8GB, Docker Desktop은 RAM 8GB 이상을 요구합니다.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-concept">
+    <div class="callout-title">공식 문서도 같은 방향을 안내합니다</div>
+    <p>Claude Code 공식 &lsquo;샌드박스 환경 선택&rsquo; 문서는 &ldquo;네이티브 Windows 호스트에서 작업한다면 컨테이너나 VM, 또는 WSL2 안의 Bash 샌드박스를 쓰라&rdquo;고 안내합니다. 또 컨테이너를 쓰면 클로드 코드가 실행하는 명령이 호스트가 아니라 컨테이너 안에서 실행되고, 프로젝트 파일의 수정만 내 PC 저장소에 반영됩니다.</p>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">Docker가 맞지 않는 경우</div>
+    <p>학교 관리 PC에서 관리자 권한 설치가 막혀 있거나, BIOS에서 가상화가 꺼져 있고 바꿀 수 없다면 Docker Desktop 자체가 설치되지 않습니다. 이때는 Docker 대신 <strong>클로드 데스크톱 앱</strong>(GUI) 또는 <strong>웹의 클로드 코드</strong>를 대안으로 검토하세요. 두 방법 모두 터미널 설치가 필요 없다고 공식 문서가 안내합니다.</p>
+  </div>
+</section>
+
+<section class="section" id="dk-options">
+  <span class="badge badge-concept">이해하기</span>
+  <h2 class="section-title">2. 방법 비교와 선택</h2>
+  <p class="section-sub">&lsquo;클로드 코드 + Docker&rsquo;에는 여러 갈래가 있습니다. 이 자료는 가장 단순한 A를 기본으로 안내합니다.</p>
+
+  <table>
+    <thead><tr><th style="white-space:nowrap;">방법</th><th>무엇을 쓰나</th><th>장점</th><th>주의</th></tr></thead>
+    <tbody>
+      <tr><td style="white-space:nowrap;"><strong>A. Docker Compose</strong><br>(이 자료의 기본)</td><td>Docker Desktop + Dockerfile + compose.yaml</td><td>명령 두 개로 끝나고 에디터가 필요 없음. 파일 두 개라 배포·재현이 쉬움</td><td>Docker Desktop 설치 필요</td></tr>
+      <tr><td style="white-space:nowrap;"><strong>B. VS Code Dev Container</strong></td><td>Docker Desktop + VS Code + Dev Containers 확장</td><td>에디터와 터미널이 컨테이너 안으로 연결됨. 공식 문서가 직접 안내</td><td>VS Code까지 설치해야 하므로 준비물이 늘어남</td></tr>
+      <tr><td style="white-space:nowrap;"><strong>C. Docker Sandboxes (sbx)</strong></td><td><code>sbx</code> CLI (Docker Desktop 불필요)</td><td>microVM이라 격리가 가장 강함. 설치가 <code>winget</code> 한 줄</td><td>Windows 11, 64비트 Intel/AMD, Windows Hypervisor Platform 활성화(관리자) 필요. 비교적 새 제품이라 화면·명령이 바뀔 수 있음</td></tr>
+      <tr><td style="white-space:nowrap;"><strong>D. WSL 2에 직접 설치</strong></td><td>WSL 2 + 리눅스용 설치 명령</td><td>Docker 없이 리눅스 환경, 공식 지원</td><td>WSL 2 활성화는 Docker Desktop과 같은 가상화 요건. 설치 명령 문제가 일부 남음</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout callout-tip">
+    <div class="callout-title">연수용 권장</div>
+    <p>준비물이 가장 적고 문제가 생겼을 때 원인을 좁히기 쉬운 <strong>A</strong>를 기본으로 하고, 참가자가 VS Code를 이미 쓴다면 B, 보안 격리를 더 중시하는 환경이라면 C를 검토하세요. B·C는 10절에서 간단히 다룹니다.</p>
+  </div>
+</section>
+
+<section class="section" id="dk-install">
+  <span class="badge badge-practice">따라 하기</span>
+  <h2 class="section-title">3. Docker Desktop 설치</h2>
+  <p class="section-sub">Docker 방식에서 가장 중요한 단계입니다. 약 10~15분 걸립니다. 이미 Docker Desktop을 쓰고 있다면 5번 단계부터 하세요.</p>
+
+  <div class="practice-shell">
+    <div class="ps-label">STEP BY STEP</div>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <p><strong>내 PC가 요건을 만족하는지 확인합니다.</strong> Docker 공식 문서(WSL 2 백엔드, x86_64 기준)의 요건은 다음과 같습니다.</p>
+        <table>
+          <thead><tr><th style="white-space:nowrap;">항목</th><th>요건</th></tr></thead>
+          <tbody>
+            <tr><td style="white-space:nowrap;">Windows 버전</td><td>Windows 10 22H2(빌드 19045) 이상, 또는 Windows 11 23H2(빌드 22631) 이상</td></tr>
+            <tr><td style="white-space:nowrap;">WSL</td><td>WSL 2.1.5 이상 (설치 마법사가 안내)</td></tr>
+            <tr><td style="white-space:nowrap;">하드웨어</td><td>RAM 8GB 이상, SLAT 지원 64비트 프로세서, BIOS/UEFI에서 가상화 사용</td></tr>
+            <tr><td style="white-space:nowrap;">지원하지 않음</td><td>Windows Server 2019·2022 같은 서버 에디션</td></tr>
+          </tbody>
+        </table>
+        <p>윈도우 버전은 <span class="kbd">Win</span>+<span class="kbd">R</span> → <code>winver</code> 입력으로 볼 수 있습니다. 에디션(Home·Pro 등)별 지원 범위는 문서 표현이 복잡하므로 <a href="https://docs.docker.com/desktop/setup/install/windows-install/" target="_blank" rel="noopener">Docker 공식 설치 문서</a>에서 본인 에디션을 직접 확인하세요. <span class="kbd">확인필요</span></p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <p><strong>가상화가 켜져 있는지 확인합니다.</strong> <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">Esc</span>로 작업 관리자를 열고 <strong>성능 &gt; CPU</strong>에서 &lsquo;가상화&rsquo; 항목이 <strong>사용</strong>인지 봅니다. &lsquo;사용 안 함&rsquo;이면 BIOS/UEFI에서 가상화(Intel VT-x, AMD-V/SVM)를 켜야 하며, 학교 관리 PC라면 IT 담당자의 도움이 필요합니다.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <p><strong>설치 파일을 내려받아 실행합니다.</strong> <a href="https://docs.docker.com/desktop/setup/install/windows-install/" target="_blank" rel="noopener">Docker Desktop for Windows 설치 문서</a>의 다운로드 링크에서 <code>Docker Desktop Installer.exe</code>를 받아 실행합니다. 설치 방식은 두 가지입니다.</p>
+        <ul>
+          <li><strong>현재 사용자만(기본값)</strong> — 관리자 권한이 필요 없습니다. 학교 PC에서는 이쪽을 먼저 시도하세요.</li>
+          <li><strong>모든 사용자</strong> — 관리자 권한(상승)이 필요합니다.</li>
+        </ul>
+        <p>&lsquo;구성(Configuration)&rsquo; 화면에서 백엔드로 <strong>WSL 2</strong>를 선택한 채 마법사를 끝내고 <strong>닫기(Close)</strong>를 누릅니다.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <p><strong>Docker Desktop을 직접 실행합니다.</strong> 설치가 끝나도 Docker는 자동으로 시작되지 않습니다. 시작 메뉴에서 &ldquo;Docker Desktop&rdquo;을 실행하고, 화면 아래쪽에 &lsquo;Engine running&rsquo; 같은 실행 상태가 보일 때까지 기다립니다. 재시작을 요구하면 재시작한 뒤 다시 실행하세요.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <p><strong>터미널(PowerShell)에서 동작을 확인합니다.</strong></p>
+        <div class="code-block">
+          <div class="cb-head"><span>PowerShell</span><button class="copy-btn">복사</button></div>
+          <pre><code>docker --version
+docker compose version
+docker run --rm hello-world</code></pre>
+        </div>
+        <p>버전 번호가 나오고 <code>hello-world</code>가 환영 메시지를 출력하면 준비 완료입니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-tip">
+    <div class="callout-title">라이선스</div>
+    <p>Docker 공식 문서는 Docker Desktop이 <strong>개인 사용, 교육, 비영리 오픈소스</strong>에는 무료라고 안내합니다. 다만 &lsquo;정부 기관&rsquo;은 유료 구독이 필요하다고 명시하고 있어, 공립학교·교육청 소속 PC에서 연수용으로 쓰는 경우는 소속 기관의 정책을 확인하는 것이 안전합니다. <span class="kbd">확인필요</span></p>
+  </div>
+</section>
+
+<section class="section" id="dk-kit">
+  <span class="badge badge-practice">따라 하기</span>
+  <h2 class="section-title">4. 실습 키트 만들기와 빌드</h2>
+  <p class="section-sub">파일 두 개를 만들고 이미지를 한 번 빌드합니다. 빌드는 처음 한 번만 하면 됩니다. 이 Mac에서는 약 1분이 걸렸고, 학교 네트워크나 Windows에서는 더 걸릴 수 있습니다.</p>
+
+  <div class="callout callout-tip">
+    <div class="callout-title">가장 쉬운 길: 강사가 만든 폴더를 받기</div>
+    <p>이 자료와 함께 제공되는 <code>docker-kit</code> 폴더(Dockerfile, compose.yaml, 빈 <code>work</code> 폴더)를 통째로 복사해 오면 아래 1~3단계는 건너뛰고 4단계부터 하면 됩니다. 강사에게 받지 못했다면 <a href="https://github.com/dshs-gemini/harness-workshop/tree/main/docker-kit" target="_blank" rel="noopener">GitHub의 docker-kit 폴더</a>에서 각 파일을 열어 내용을 복사하거나, 저장소 페이지의 <strong>Code &gt; Download ZIP</strong>으로 받은 압축 파일 안의 <code>docker-kit</code> 폴더를 쓰세요. 직접 만들 때는 메모장이 파일 이름 뒤에 <code>.txt</code>를 붙이지 않도록 주의하세요(아래 막힐 때 참고).</p>
+  </div>
+
+  <div class="practice-shell">
+    <div class="ps-label">STEP BY STEP</div>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <p><strong>작업 폴더를 만듭니다.</strong> 경로에 한글·공백이 없는 위치를 권합니다(문제가 생겼을 때 원인을 좁히기 쉽습니다). 공식 근거는 확인하지 못한 예방 조치입니다.</p>
+        <div class="code-block">
+          <div class="cb-head"><span>PowerShell</span><button class="copy-btn">복사</button></div>
+          <pre><code>mkdir C:\claude-docker\work
+cd C:\claude-docker</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <p><strong><code>Dockerfile</code>을 만듭니다.</strong> 확장자 없이 <code>Dockerfile</code>이라는 이름의 텍스트 파일로 저장하고 아래 내용을 붙여넣습니다. 이 파일이 &ldquo;어떤 도구가 든 환경을 만들지&rdquo;를 적은 설계도입니다.</p>
+        <div class="code-block">
+          <div class="cb-head"><span>C:\claude-docker\Dockerfile</span><button class="copy-btn">복사</button></div>
+          <pre><code>FROM node:22-bookworm-slim
+
+# 기본 도구: git(하네스 플러그인 설치에 필요), gh(GitHub), 편집기·검색 도구
+RUN apt-get update &amp;&amp; apt-get install -y --no-install-recommends \
+      git ca-certificates curl less nano jq ripgrep gh \
+    &amp;&amp; rm -rf /var/lib/apt/lists/*
+
+# Claude Code와 Firebase CLI 설치 (이미지를 만들 때 한 번만 실행됨)
+ARG CLAUDE_CODE_VERSION=latest
+RUN npm install -g @anthropic-ai/claude-code@${CLAUDE_CODE_VERSION} firebase-tools
+
+# 로그인 정보가 저장될 폴더를 일반 사용자(node) 소유로 미리 만들어 둠
+RUN mkdir -p /workspace /home/node/.claude /home/node/.config \
+    &amp;&amp; chown -R node:node /workspace /home/node/.claude /home/node/.config
+
+# 컨테이너 안에서는 이미지가 버전을 고정하므로 자동 업데이트는 끈다
+ENV DISABLE_AUTOUPDATER=1 \
+    CLAUDE_CONFIG_DIR=/home/node/.claude
+
+USER node
+WORKDIR /workspace
+CMD ["claude"]</code></pre>
+        </div>
+        <p>한 줄씩 보면 이렇습니다.</p>
+        <ul>
+          <li><code>FROM node:22-…</code> — Node.js 22가 들어 있는 가벼운 리눅스(Debian)에서 시작합니다. 클로드 코드의 npm 설치는 Node.js 22 이상을 요구합니다.</li>
+          <li><code>npm install -g …</code> — 클로드 코드와 Firebase CLI를 설치합니다. 공식 문서상 npm 패키지는 설치 스크립트와 같은 네이티브 실행 파일을 내려받습니다.</li>
+          <li><code>USER node</code> — 관리자(root)가 아닌 일반 사용자로 실행합니다. 클로드 코드는 root로 실행하면 <code>--dangerously-skip-permissions</code>를 거부하므로, 일반 사용자가 안전한 기본값입니다.</li>
+          <li><code>DISABLE_AUTOUPDATER=1</code> — 이미지가 버전을 고정하므로 자동 업데이트를 끕니다. 새 버전은 이미지를 다시 빌드해 받습니다(9절).</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <p><strong><code>compose.yaml</code>을 만듭니다.</strong> 같은 폴더에 저장합니다. 이 파일이 &ldquo;어떤 폴더를 공유하고 무엇을 보관할지&rdquo;를 정합니다. 들여쓰기는 <strong>공백 2칸</strong>이며 탭 문자는 쓸 수 없습니다.</p>
+        <div class="code-block">
+          <div class="cb-head"><span>C:\claude-docker\compose.yaml</span><button class="copy-btn">복사</button></div>
+          <pre><code>services:
+  claude:
+    build: .
+    image: claude-workshop
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./work:/workspace                     # 내 PC의 work 폴더 = 컨테이너의 /workspace
+      - claude-config:/home/node/.claude      # Claude Code 로그인·설정 보관
+      - tool-config:/home/node/.config        # Firebase·GitHub CLI 로그인 보관
+
+volumes:
+  claude-config:
+  tool-config:</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <p><strong>이미지를 빌드합니다.</strong> Docker Desktop이 실행 중인 상태에서, <code>C:\claude-docker</code> 폴더의 PowerShell에서 실행합니다.</p>
+        <div class="code-block">
+          <div class="cb-head"><span>PowerShell</span><button class="copy-btn">복사</button></div>
+          <pre><code>docker compose build</code></pre>
+        </div>
+        <p>끝나면 <code>Image claude-workshop Built</code>가 출력됩니다. 중간에 진행 표시가 오래 멈춘 것처럼 보여도 정상일 수 있으니 몇 분은 기다려 보세요.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout callout-concept">
+    <div class="callout-title">&lsquo;이미지&rsquo;와 &lsquo;컨테이너&rsquo;</div>
+    <p><strong>이미지</strong>는 위 설계도로 만든 설치 완료본(읽기 전용 틀)이고, <strong>컨테이너</strong>는 그 이미지를 실제로 실행한 인스턴스입니다. 빌드는 이미지를 한 번 만들 뿐이며, 앞으로 <code>docker compose run</code>을 할 때마다 같은 이미지에서 새 컨테이너가 열렸다 닫힙니다.</p>
+  </div>
+</section>
+
+<section class="section" id="dk-run">
+  <span class="badge badge-practice">따라 하기</span>
+  <h2 class="section-title">5. 실행과 로그인</h2>
+  <p class="section-sub">이제부터는 설치 없이 이 명령 하나로 클로드 코드를 시작합니다.</p>
+
+  <div class="practice-shell">
+    <div class="ps-label">STEP BY STEP</div>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <p><strong>클로드 코드를 시작합니다.</strong> Docker Desktop이 켜져 있는지 확인하고, 키트 폴더에서 실행합니다.</p>
+        <div class="code-block">
+          <div class="cb-head"><span>PowerShell</span><button class="copy-btn">복사</button></div>
+          <pre><code>cd C:\claude-docker
+docker compose run --rm claude</code></pre>
+        </div>
+        <p><code>--rm</code>은 종료할 때 컨테이너를 자동으로 지우라는 뜻입니다. 로그인 정보와 작업 파일은 따로 보관되므로 지워도 사라지지 않습니다(6절).</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <p><strong>로그인합니다.</strong> 컨테이너 안에는 브라우저가 없어서, 로그인 주소가 터미널에 글자로 표시됩니다.</p>
+        <ol>
+          <li>터미널에 표시된 <strong>로그인 주소(URL)를 드래그해 복사</strong>합니다. (PowerShell에서는 선택 후 <span class="kbd">Enter</span> 또는 우클릭이 복사입니다.)</li>
+          <li>Windows의 일반 브라우저 주소창에 붙여넣고 Claude 계정으로 로그인·승인합니다.</li>
+          <li>브라우저가 연결을 완료하지 못하면 화면에 <strong>코드</strong>가 표시됩니다. 그 코드를 복사해 터미널의 <code>Paste code here if prompted</code> 입력란에 붙여넣고 <span class="kbd">Enter</span>를 누릅니다.</li>
+        </ol>
+        <p>Claude Code 공식 devcontainer 문서가 &ldquo;브라우저 로그인은 끝났지만 콜백이 컨테이너에 닿지 않으면 코드를 복사해 터미널에 붙여넣으라&rdquo;고 안내한 방식입니다. 이 Mac에서는 계정 로그인까지 진행하지 못했으므로 Windows 리허설에서 한 번 확인해 주세요. <span class="kbd">확인필요</span></p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <p><strong>첫 대화로 환경을 확인합니다.</strong></p>
+        <div class="terminal">
+          <div class="terminal-head"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">claude (Docker 컨테이너 안)</span></div>
+          <pre><code><span class="term-you">&gt; 지금 어떤 환경에서 실행 중인지 알려줘. 운영체제, 현재 폴더, git 버전을 확인해서 요약해줘</span>
+
+<span class="term-claude">클로드 코드가 명령을 실행해 확인합니다…</span></code></pre>
+        </div>
+        <p>리눅스(Debian) 환경, 현재 폴더 <code>/workspace</code>, git 버전이 나오면 컨테이너 안에서 정상 동작하는 것입니다.</p>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <p><strong>종료합니다.</strong> 대화창에서 <code>/exit</code>를 입력하거나 <span class="kbd">Ctrl</span>+<span class="kbd">D</span>를 두 번 누릅니다. 컨테이너는 자동으로 닫히고 PowerShell 프롬프트로 돌아옵니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>자주 쓰는 명령 모음</h3>
+  <table>
+    <thead><tr><th style="white-space:nowrap;">하고 싶은 일</th><th>명령 (키트 폴더에서)</th></tr></thead>
+    <tbody>
+      <tr><td style="white-space:nowrap;">클로드 코드 시작</td><td><code>docker compose run --rm claude</code></td></tr>
+      <tr><td style="white-space:nowrap;">셸(bash)만 열기</td><td><code>docker compose run --rm claude bash</code></td></tr>
+      <tr><td style="white-space:nowrap;">Firebase 로그인</td><td><code>docker compose run --rm claude firebase login --no-localhost</code></td></tr>
+      <tr><td style="white-space:nowrap;">버전 확인</td><td><code>docker compose run --rm claude claude --version</code></td></tr>
+      <tr><td style="white-space:nowrap;">설치 상태 진단</td><td><code>docker compose run --rm claude claude doctor</code></td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="section" id="dk-files">
+  <span class="badge badge-concept">이해하기</span>
+  <h2 class="section-title">6. 파일과 로그인은 어디에 남나</h2>
+  <p class="section-sub">컨테이너는 닫을 때마다 지워지므로, 남겨야 할 것이 어디에 있는지 알아야 합니다.</p>
+
+  <table>
+    <thead><tr><th style="white-space:nowrap;">무엇</th><th>어디에 있나</th><th>컨테이너를 지우면</th></tr></thead>
+    <tbody>
+      <tr><td style="white-space:nowrap;"><strong>내 작업 파일</strong></td><td>내 PC의 <code>C:\claude-docker\work</code> (컨테이너 안에서는 <code>/workspace</code>)</td><td>그대로 남음. 탐색기에서 바로 열 수 있음</td></tr>
+      <tr><td style="white-space:nowrap;"><strong>클로드 로그인·설정·대화 기록</strong></td><td>Docker 볼륨 <code>claude-config</code> (내 PC 폴더가 아니라 Docker가 관리하는 저장소)</td><td>그대로 남음. 매번 로그인할 필요 없음</td></tr>
+      <tr><td style="white-space:nowrap;"><strong>Firebase·GitHub 로그인</strong></td><td>Docker 볼륨 <code>tool-config</code></td><td>그대로 남음</td></tr>
+      <tr><td style="white-space:nowrap;">그 밖에 컨테이너 안에 설치·생성한 것</td><td>컨테이너 내부</td><td><strong>사라짐.</strong> 필요한 도구는 Dockerfile에 추가하고 다시 빌드</td></tr>
+    </tbody>
+  </table>
+
+  <p>이 구조를 이 Mac에서 직접 확인한 결과입니다. 컨테이너 안에서 만든 파일이 호스트의 <code>work</code> 폴더에 나타나고, 컨테이너를 두 번 연달아 열었다 닫아도 볼륨의 파일이 유지되었습니다.</p>
+
+  <div class="callout callout-concept">
+    <div class="callout-title">왜 <code>CLAUDE_CONFIG_DIR</code>를 지정하나</div>
+    <p>클로드 코드는 로그인 토큰·설정을 <code>~/.claude</code>에, 계정 정보와 프로젝트 신뢰 기록을 별도 파일 <code>~/.claude.json</code>에 저장합니다. 공식 문서는 볼륨을 <code>~/.claude</code>에 붙이고 <code>CLAUDE_CONFIG_DIR</code>를 같은 경로로 지정해야 두 가지가 모두 볼륨에 저장된다고 설명합니다. 지정하지 않으면 컨테이너를 지울 때마다 첫 실행 설정을 다시 하게 됩니다. 키트의 Dockerfile이 이미 지정해 두었습니다.</p>
+  </div>
+
+  <div class="callout callout-danger">
+    <div class="callout-title">로그인이 사라지는 명령</div>
+    <p><code>docker compose down -v</code>의 <code>-v</code>는 볼륨까지 삭제합니다. 클로드·Firebase 로그인 정보가 모두 지워지므로 연수 중에는 쓰지 마세요. <code>--rm</code>만 쓰는 평소 사용에서는 지워지지 않습니다.</p>
+  </div>
+</section>
+
+<section class="section" id="dk-workshop">
+  <span class="badge badge-practice">따라 하기</span>
+  <h2 class="section-title">7. 연수 실습에 이어 쓰기</h2>
+  <p class="section-sub">연수 본 과정(하네스 플러그인 설치, Firebase 설정·배포)을 컨테이너 안에서 진행할 때 달라지는 점만 정리합니다.</p>
+
+  <table>
+    <thead><tr><th style="white-space:nowrap;">연수 단계</th><th>컨테이너에서는</th><th style="white-space:nowrap;">검증</th></tr></thead>
+    <tbody>
+      <tr><td>클로드 코드 설치(1.2절)</td><td>설치하지 않음. 5절의 <code>docker compose run --rm claude</code>로 대체</td><td>확인함</td></tr>
+      <tr><td>Git 설치</td><td>이미지에 포함되어 설치 불필요</td><td>확인함</td></tr>
+      <tr><td>Node.js·Firebase CLI 설치</td><td>이미지에 포함 (Node 22, firebase-tools 15.34.1로 확인)</td><td>확인함</td></tr>
+      <tr><td><code>/plugin marketplace add revfactory/harness</code></td><td>클로드 코드 안에서 그대로 입력. GitHub에서 내려받으므로 외부 접속이 필요</td><td>git 포함만 확인, 플러그인 설치는 <span class="kbd">확인필요</span></td></tr>
+      <tr><td><code>firebase login</code></td><td>브라우저가 없으므로 <code>firebase login --no-localhost</code>를 사용 (아래 설명)</td><td>옵션 존재 확인, 로그인 완료는 <span class="kbd">확인필요</span></td></tr>
+      <tr><td><code>gh auth login</code></td><td>이미지에 gh 포함. 안내되는 주소를 PC 브라우저에서 열어 인증</td><td>gh 설치만 확인, 로그인은 <span class="kbd">확인필요</span></td></tr>
+      <tr><td>Firebase Hosting 배포 후 URL 확인</td><td>배포는 컨테이너 안에서, URL 확인은 PC 브라우저에서</td><td><span class="kbd">확인필요</span></td></tr>
+    </tbody>
+  </table>
+
+  <h3>Firebase 로그인 (브라우저가 없는 환경)</h3>
+  <p><code>firebase login</code>은 보통 브라우저를 열고 컴퓨터의 localhost로 결과를 돌려받습니다. 컨테이너 안에서는 이 방식이 되지 않으므로 <code>--no-localhost</code> 옵션을 씁니다. 이 옵션은 도움말에서 &ldquo;localhost에 접근할 수 없는 장치에서 로그인&rdquo;하는 용도로 설명됩니다.</p>
+
+  <div class="terminal">
+    <div class="terminal-head"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="title">PowerShell</span></div>
+    <pre><code><span class="term-prompt">PS C:\claude-docker&gt;</span> docker compose run --rm claude firebase login --no-localhost
+<span class="term-comment"># 터미널에 로그인 주소가 표시됨 → PC 브라우저에서 열어 승인
+# → 브라우저에 표시된 인증 코드를 터미널에 붙여넣기</span></code></pre>
+  </div>
+
+  <div class="callout callout-warn">
+    <div class="callout-title">연수 슬라이드의 <code>! firebase login</code>과 다릅니다</div>
+    <p>본 과정 슬라이드는 클로드 코드 안에서 <code>! firebase login</code>을 실행하는 흐름을 일부 포함합니다. 컨테이너에서는 주소 복사·코드 붙여넣기가 필요한 <code>--no-localhost</code> 방식이 더 안정적일 것으로 보이지만, 클로드 코드 입력창 안에서 코드 붙여넣기가 잘 되는지는 확인하지 못했습니다. 번거로우면 <strong>클로드 코드를 시작하기 전에 위 명령으로 먼저 로그인</strong>해 두세요. 로그인 정보는 <code>tool-config</code> 볼륨에 남아 이후 클로드 코드 안에서도 사용됩니다. <span class="kbd">확인필요</span></p>
+  </div>
+
+  <div class="callout callout-tip">
+    <div class="callout-title">로컬 미리보기가 필요하면</div>
+    <p>본 과정은 Firebase Hosting에 배포한 뒤 URL로 확인하므로 포트를 열 필요가 없습니다. 컨테이너 안에서 개발 서버(예: 3000번)를 띄워 PC 브라우저로 보고 싶다면 compose.yaml의 <code>claude</code> 서비스에 <code>ports: ["3000:3000"]</code>를 추가하고 <code>docker compose run --rm --service-ports claude</code>로 실행해야 합니다. 서버는 <code>localhost</code>가 아니라 <code>0.0.0.0</code>에 바인딩되어야 PC에서 접속됩니다. <span class="kbd">확인필요</span></p>
+  </div>
+</section>
+
+<section class="section" id="dk-security">
+  <span class="badge badge-concept">이해하기</span>
+  <h2 class="section-title">8. 안전하게 쓰는 법</h2>
+  <p class="section-sub">컨테이너는 보호막이 되어 주지만 만능은 아닙니다. 공식 문서의 경고를 연수 상황에 맞게 정리했습니다.</p>
+
+  <div class="grid2">
+    <div class="card good">
+      <span class="card-tag">컨테이너가 막아 주는 것</span>
+      <h4 style="margin-top:0;">PC의 나머지 폴더</h4>
+      <p style="font-size:13.6px; margin-bottom:0;">클로드 코드가 실행하는 명령은 컨테이너 안에서만 돌고, PC에서는 <code>work</code> 폴더만 보입니다. 바탕화면·문서·다운로드 폴더는 컨테이너에서 접근할 수 없습니다.</p>
+    </div>
+    <div class="card bad">
+      <span class="card-tag">컨테이너가 막아 주지 못하는 것</span>
+      <h4 style="margin-top:0;">work 폴더와 컨테이너 안의 비밀</h4>
+      <p style="font-size:13.6px; margin-bottom:0;">클로드 코드는 <code>work</code> 폴더의 파일을 수정·삭제할 수 있고, 인터넷도 쓸 수 있습니다. 컨테이너 안의 로그인 정보(<code>~/.claude</code>)도 같은 영역에 있습니다.</p>
+    </div>
+  </div>
+
+  <ul>
+    <li><strong>권한 확인 모드를 그대로 쓰세요.</strong> 공식 문서는 컨테이너에서 <code>--dangerously-skip-permissions</code>를 쓸 수 있다고 하면서도, 그 경우 악의적인 프로젝트가 컨테이너 안의 모든 것(클로드 로그인 정보 포함)을 외부로 빼낼 수 있다고 경고합니다. 연수에서는 기본 권한 모드로 충분합니다.</li>
+    <li><strong>믿을 수 있는 저장소만 여세요.</strong> 출처를 모르는 프로젝트를 <code>work</code>에 내려받아 실행하지 마세요.</li>
+    <li><strong>PC의 비밀 파일을 마운트하지 마세요.</strong> <code>~/.ssh</code>, 클라우드 인증 파일 등을 <code>volumes</code>에 추가하지 않는 것이 공식 권고입니다. 필요하면 저장소 범위의 짧은 수명 토큰을 쓰세요.</li>
+    <li><strong>work 폴더는 백업하세요.</strong> 클로드 코드가 이 폴더를 실제로 수정하므로, 중요한 자료는 따로 복사해 두거나 Git으로 관리하세요.</li>
+    <li><strong>이 키트에는 방화벽이 없습니다.</strong> 공식 참조 컨테이너는 허용한 도메인으로만 나가도록 iptables 방화벽을 두지만, 이 키트는 연수 편의를 위해 넣지 않았습니다. 공식 문서도 방화벽은 클로드 코드 동작에 필수가 아니라고 설명합니다.</li>
+  </ul>
+
+  <div class="callout callout-concept">
+    <div class="callout-title">데이터 전송은 그대로입니다</div>
+    <p>컨테이너를 쓰든 안 쓰든 프롬프트와 클로드가 읽은 파일 내용은 Anthropic API로 전송됩니다. 학생 개인정보 같은 민감한 자료는 컨테이너 여부와 상관없이 <code>work</code> 폴더에 두지 마세요.</p>
+  </div>
+</section>
+
+<section class="section" id="dk-trouble">
+  <span class="badge badge-check">점검</span>
+  <h2 class="section-title">9. 막혔을 때</h2>
+  <p class="section-sub">증상별로 먼저 확인할 것을 정리했습니다. 항목을 눌러 펼치세요.</p>
+
+  <div class="faq-item">
+    <div class="faq-q"><span><code>docker</code>가 인식되지 않는다고 나와요</span><span class="chev">▾</span></div>
+    <div class="faq-a"><div class="faq-a-inner">Docker Desktop을 설치한 뒤 PowerShell 창을 새로 열었는지 확인하세요(이미 열려 있던 창은 새 PATH를 모릅니다). 그래도 안 되면 Docker Desktop이 실제로 설치되었는지, 3절 4단계처럼 직접 실행했는지 확인합니다.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q"><span><code>Cannot connect to the Docker daemon</code> 같은 오류가 나요</span><span class="chev">▾</span></div>
+    <div class="faq-a"><div class="faq-a-inner">Docker Desktop이 꺼져 있거나 아직 시작 중일 때 나옵니다(이 Mac에서 Docker를 끈 상태로 명령했을 때 같은 오류가 재현되었습니다). Docker Desktop을 실행하고 &lsquo;Engine running&rsquo; 상태가 될 때까지 기다린 뒤 다시 시도하세요.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q"><span>Docker Desktop이 시작되지 않거나 WSL·가상화 오류가 나요</span><span class="chev">▾</span></div>
+    <div class="faq-a"><div class="faq-a-inner">3절 2단계의 가상화 사용 여부를 먼저 확인하세요. 꺼져 있으면 BIOS/UEFI에서 켜야 합니다. WSL이 오래된 경우 관리자 PowerShell에서 <code>wsl --update</code>를 실행해 보고, 학교 관리 PC라면 IT 담당자에게 문의하세요. 이 단계가 풀리지 않으면 Docker 방식은 포기하고 클로드 데스크톱 앱이나 웹 버전을 쓰는 것이 시간상 낫습니다. <span class="kbd">확인필요</span></div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q"><span>메모장으로 만든 파일이 <code>Dockerfile.txt</code>가 되었어요</span><span class="chev">▾</span></div>
+    <div class="faq-a"><div class="faq-a-inner">저장할 때 &lsquo;파일 형식&rsquo;을 <strong>모든 파일</strong>로 바꾸고 파일 이름을 <code>Dockerfile</code> 그대로 입력하세요. 탐색기의 &lsquo;보기 &gt; 파일 확장명&rsquo;을 켜면 숨은 <code>.txt</code>가 보입니다. 인코딩은 UTF-8로 저장합니다. 가장 확실한 방법은 강사가 배포한 <code>docker-kit</code> 폴더를 그대로 쓰는 것입니다.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q"><span>빌드 중에 <code>apt</code>·<code>npm</code> 오류나 시간 초과가 나요</span><span class="chev">▾</span></div>
+    <div class="faq-a"><div class="faq-a-inner">학교 네트워크가 패키지 저장소를 차단하거나 프록시를 거치는 경우가 많습니다. 개인 핫스팟으로 바꿔 다시 빌드해 보세요(<code>docker compose build</code>는 이미 받은 단계를 재사용합니다). 여러 명이 동시에 막힌다면 11절의 &lsquo;이미지 파일 배포&rsquo;로 빌드 자체를 건너뛰게 하세요.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q"><span><code>toomanyrequests</code>(429) 같은 Docker Hub 오류가 나요</span><span class="chev">▾</span></div>
+    <div class="faq-a"><div class="faq-a-inner">Docker Hub는 로그인하지 않은 사용자를 <strong>IP 주소당 6시간에 100회</strong>로 제한합니다(공식 문서). 한 교실에서 여러 명이 같은 공유기로 동시에 이미지를 받으면 이 한도에 가까워질 수 있습니다. 11절의 이미지 파일 배포가 가장 확실한 해결책입니다.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q"><span>로그인 주소를 눌러도 브라우저가 열리지 않아요</span><span class="chev">▾</span></div>
+    <div class="faq-a"><div class="faq-a-inner">정상입니다. 컨테이너에는 브라우저가 없어 자동으로 열리지 않습니다. 터미널에 표시된 주소를 직접 복사해 PC 브라우저에 붙여넣고, 화면에 나온 코드를 터미널에 붙여넣으세요(5절 2단계). 주소가 여러 줄로 꺾여 복사가 어렵다면 PowerShell 창을 넓히고 다시 시도합니다.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q"><span>work 폴더에 파일을 저장할 수 없다는 권한 오류가 나요</span><span class="chev">▾</span></div>
+    <div class="faq-a"><div class="faq-a-inner">이 Mac에서는 발생하지 않았지만, Windows 폴더를 컨테이너에 공유할 때 권한 차이로 쓰기가 막히는 사례가 있을 수 있습니다. 먼저 폴더가 <code>C:\claude-docker</code>처럼 일반 위치(바탕화면 동기화 폴더나 OneDrive 폴더가 아닌 곳)인지 확인하세요. 해결되지 않으면 리허설에서 재현해 원인을 기록해 두세요. <span class="kbd">확인필요</span></div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q"><span>클로드 코드를 최신 버전으로 올리고 싶어요</span><span class="chev">▾</span></div>
+    <div class="faq-a"><div class="faq-a-inner">컨테이너 안에서는 자동 업데이트를 껐으므로 이미지를 다시 만들어야 합니다. 캐시를 쓰지 않고 새로 빌드하세요.<br><code>docker compose build --no-cache</code><br>특정 버전을 고정하려면 <code>docker compose build --build-arg CLAUDE_CODE_VERSION=버전번호</code>를 씁니다. 로그인 정보는 볼륨에 있으므로 유지됩니다.</div></div>
+  </div>
+  <div class="faq-item">
+    <div class="faq-q"><span>연수가 끝났어요. 깨끗하게 지우고 싶어요</span><span class="chev">▾</span></div>
+    <div class="faq-a"><div class="faq-a-inner">키트 폴더에서 아래 두 명령을 차례로 실행합니다. 첫 명령은 로그인 정보가 담긴 볼륨까지 삭제하고, 두 번째는 이미지를 삭제합니다. <code>work</code> 폴더의 파일은 지워지지 않으니 필요 없으면 탐색기에서 직접 삭제하세요.<br><code>docker compose down --volumes</code><br><code>docker rmi claude-workshop</code></div></div>
+  </div>
+</section>
+
+<section class="section" id="dk-alt">
+  <span class="badge badge-concept">이해하기</span>
+  <h2 class="section-title">10. 다른 방법: sbx, VS Code, WSL</h2>
+  <p class="section-sub">A 방식이 맞지 않을 때의 대안입니다. 아래 내용은 공식 문서를 근거로 정리했으며, 직접 실행해 확인하지는 않았습니다.</p>
+
+  <h3>B. VS Code Dev Container</h3>
+  <p>VS Code와 Dev Containers 확장이 있다면, 프로젝트의 <code>.devcontainer/devcontainer.json</code> 한 파일로 클로드 코드를 컨테이너에 설치할 수 있습니다. 클로드 코드 공식 문서가 안내하는 최소 설정은 다음과 같습니다.</p>
+  <div class="code-block">
+    <div class="cb-head"><span>.devcontainer/devcontainer.json (공식 문서 예시)</span><button class="copy-btn">복사</button></div>
+    <pre><code>{
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "features": {
+    "ghcr.io/anthropics/devcontainer-features/claude-code:1.0": {}
+  }
+}</code></pre>
+  </div>
+  <p>저장한 뒤 명령 팔레트(<span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">P</span>)에서 <strong>Dev Containers: Rebuild Container</strong>를 실행하고, 열린 터미널에서 <code>claude</code>를 입력해 로그인합니다. 컨테이너를 다시 만들 때 로그인이 유지되게 하려면 문서의 &lsquo;Persist authentication&rsquo; 절처럼 볼륨과 <code>CLAUDE_CONFIG_DIR</code>를 추가하세요. Node.js 설치 오류가 나면 <code>ghcr.io/devcontainers/features/node:1</code> 기능을 함께 넣으라고 문서가 안내합니다.</p>
+
+  <h3>C. Docker Sandboxes (<code>sbx</code>)</h3>
+  <p>Docker가 제공하는 별도 제품으로, 에이전트를 가상머신(microVM) 안에서 실행합니다. Docker Desktop이 필요 없고, 프로젝트 폴더만 호스트와 공유됩니다. 공식 문서와 검색 결과에서 확인한 내용은 다음과 같습니다.</p>
+  <ul>
+    <li>Windows 요건: <strong>Windows 11, 64비트 Intel/AMD 프로세서, Windows Hypervisor Platform 활성화</strong>(관리자 권한 PowerShell에서 선택 기능 활성화).</li>
+    <li>설치: <code>winget install -h Docker.sbx</code> (사용자 단위 설치, 관리자 권한 불필요).</li>
+    <li>실행: 프로젝트 폴더에서 <code>sbx run claude</code>. 클로드 구독 로그인은 샌드박스 안에서 <code>/login</code>을 입력하며, 세션 토큰은 호스트에 남고 샌드박스에는 저장되지 않는다고 문서가 설명합니다.</li>
+  </ul>
+  <div class="callout callout-warn">
+    <div class="callout-title">연수에는 아직 권하지 않는 이유</div>
+    <p>Windows Hypervisor Platform은 Docker Desktop과 같은 종류의 가상화 요건이라, 가상화 문제로 막힌 PC에서는 똑같이 막힙니다. 또 비교적 새 제품이어서 명령·화면이 바뀔 수 있고, 이전 형태인 <code>docker sandbox run claude</code>는 문서에서 deprecated로 표시됩니다. 강사가 먼저 시험해 본 뒤 도입 여부를 정하세요. <span class="kbd">확인필요</span></p>
+  </div>
+
+  <h3>D. WSL 2에 직접 설치</h3>
+  <p>공식 문서는 WSL 2를 Windows에서 클로드 코드를 쓰는 정식 방법 중 하나로 안내하며, 이 방식은 샌드박스 기능도 지원합니다. WSL 터미널을 열어 리눅스용 설치 명령(<code>curl -fsSL https://claude.ai/install.sh | bash</code>)을 실행하면 됩니다. 다만 WSL 2도 가상화가 필요하고, 설치 스크립트와 네트워크 차단 문제는 일부 남습니다.</p>
+</section>
+
+<section class="section" id="dk-instructor">
+  <span class="badge badge-practice">따라 하기</span>
+  <h2 class="section-title">11. 강사용 사전 준비</h2>
+  <p class="section-sub">연수 당일 20~30명이 동시에 이미지를 빌드하면 학교 네트워크와 Docker Hub 한도 때문에 막힐 수 있습니다. 강사가 한 번 만들고 파일로 나눠 주는 방법입니다.</p>
+
+  <div class="practice-shell">
+    <div class="ps-label">STEP BY STEP</div>
+
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <p><strong>강사 PC에서 이미지를 빌드합니다.</strong> 반드시 <strong>참가자와 같은 종류의 CPU</strong>(대부분의 Windows 노트북은 x64) PC에서 만드세요. Apple Silicon Mac에서 만든 이미지는 ARM용이라 Intel/AMD Windows에서 실행되지 않습니다. Mac에서 만들어야 한다면 아래 명령으로 플랫폼을 지정해 빌드하는 방법이 있습니다. <span class="kbd">확인필요</span></p>
+        <div class="code-block">
+          <div class="cb-head"><span>Mac에서 x64용으로 빌드할 때</span><button class="copy-btn">복사</button></div>
+          <pre><code>docker buildx build --platform linux/amd64 -t claude-workshop --load .</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <p><strong>이미지를 파일 하나로 저장합니다.</strong> 이 Mac에서 저장한 결과 약 487MB였습니다.</p>
+        <div class="code-block">
+          <div class="cb-head"><span>강사 PC</span><button class="copy-btn">복사</button></div>
+          <pre><code>docker save claude-workshop -o claude-workshop.tar</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <p><strong>USB나 공유 드라이브로 <code>claude-workshop.tar</code>와 <code>docker-kit</code> 폴더를 나눠 줍니다.</strong> 참가자는 Docker Desktop만 설치한 뒤 아래 명령으로 불러옵니다.</p>
+        <div class="code-block">
+          <div class="cb-head"><span>참가자 PC (키트 폴더에서)</span><button class="copy-btn">복사</button></div>
+          <pre><code>docker load -i claude-workshop.tar
+docker compose run --rm claude</code></pre>
+        </div>
+        <p>이 Mac에서 <code>save</code> → 이미지 삭제 → <code>load</code> → <code>docker compose run --rm claude claude --version</code> 순서로 실행해, 다시 빌드하지 않고 바로 실행되는 것을 확인했습니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>연수 전 리허설 체크 (Windows 노트북 1대 이상)</h3>
+  <ul class="checklist">
+    <li><input type="checkbox"><span>Docker Desktop을 학교 관리 계정 권한으로 설치할 수 있다(설치 방식: 현재 사용자 / 모든 사용자).</span></li>
+    <li><input type="checkbox"><span><code>docker compose run --rm claude</code> 실행 후 로그인 주소 복사 → 코드 붙여넣기로 로그인이 끝난다.</span></li>
+    <li><input type="checkbox"><span>컨테이너에서 만든 파일이 <code>work</code> 폴더에 나타나고, 컨테이너를 닫았다 열어도 로그인이 유지된다.</span></li>
+    <li><input type="checkbox"><span><code>/plugin marketplace add revfactory/harness</code>가 성공한다.</span></li>
+    <li><input type="checkbox"><span><code>firebase login --no-localhost</code>로 로그인하고, 이후 클로드 코드 안에서 Firebase 명령이 동작한다.</span></li>
+    <li><input type="checkbox"><span>학교 네트워크에서 이미지 빌드(또는 <code>docker load</code>)가 몇 분 안에 끝난다.</span></li>
+  </ul>
+
+  <div class="callout callout-concept">
+    <div class="callout-title">연수 시간 계획에 미치는 영향</div>
+    <p>Docker Desktop 설치(약 10~15분)와 첫 실행 확인은 연수 시간에 하기에 길고 실패 가능성도 큽니다. 가능하면 <strong>연수 전에 사전 과제로 3절을 완료</strong>하게 하고, 당일에는 5절(실행과 로그인)부터 시작하도록 안내하세요. 연수 슬라이드에는 M1의 5번(개념), 6번(이미지 빌드), 7번(실행·로그인, 6~7번은 해당자만)으로 반영되어 있습니다. 기본 가이드 HTML은 수정하지 않았습니다.</p>
+  </div>
+</section>
+
+<section class="section" id="dk-checklist">
+  <span class="badge badge-check">점검</span>
+  <h2 class="section-title">12. 체크리스트와 참고 자료</h2>
+
+  <ul class="checklist">
+    <li><input type="checkbox"><span>Docker Desktop이 실행 중이고 <code>docker run --rm hello-world</code>가 성공한다.</span></li>
+    <li><input type="checkbox"><span>키트 폴더(Dockerfile, compose.yaml, work)가 준비되어 있고 <code>docker compose build</code>가 끝났다(또는 <code>docker load</code> 완료).</span></li>
+    <li><input type="checkbox"><span><code>docker compose run --rm claude</code>로 클로드 코드를 시작해 로그인했다.</span></li>
+    <li><input type="checkbox"><span>클로드가 만든 파일을 탐색기의 <code>work</code> 폴더에서 확인했다.</span></li>
+    <li><input type="checkbox"><span>컨테이너를 닫았다가 다시 열어도 로그인이 유지되는 것을 확인했다.</span></li>
+    <li><input type="checkbox"><span>안전 수칙(기본 권한 모드, 믿을 수 있는 저장소만, 민감 자료 제외)을 이해했다.</span></li>
+  </ul>
+
+  <h3>참고 자료</h3>
+  <ul class="refs">
+    <li><span class="ref-type">공식 문서</span>Claude Code, Development containers &mdash; 컨테이너 설치, 로그인 유지, 방화벽, 권한 생략 시 주의. <a href="https://code.claude.com/docs/en/devcontainer" target="_blank" rel="noopener">code.claude.com/docs/en/devcontainer</a></li>
+    <li><span class="ref-type">공식 문서</span>Claude Code, Choose a sandbox environment &mdash; 샌드박스 방식 비교와 Windows 호스트 권장. <a href="https://code.claude.com/docs/en/sandbox-environments" target="_blank" rel="noopener">code.claude.com/docs/en/sandbox-environments</a></li>
+    <li><span class="ref-type">공식 문서</span>Claude Code, Advanced setup &mdash; 시스템 요건, npm 설치(Node.js 22 이상), Windows·WSL 설치. <a href="https://code.claude.com/docs/en/setup" target="_blank" rel="noopener">code.claude.com/docs/en/setup</a></li>
+    <li><span class="ref-type">공식 문서</span>Claude Code, Troubleshoot installation and login &mdash; Windows 설치 오류별 해결. <a href="https://code.claude.com/docs/en/troubleshoot-install" target="_blank" rel="noopener">code.claude.com/docs/en/troubleshoot-install</a></li>
+    <li><span class="ref-type">참조 구현</span>anthropics/claude-code 저장소의 <code>.devcontainer</code> &mdash; 방화벽·볼륨을 갖춘 참조 컨테이너(유지 관리되는 베이스 이미지가 아닌 예시). <a href="https://github.com/anthropics/claude-code/tree/main/.devcontainer" target="_blank" rel="noopener">GitHub</a></li>
+    <li><span class="ref-type">공식 문서</span>Docker Desktop for Windows 설치 &mdash; 요건, 설치 방식, 구독 안내. <a href="https://docs.docker.com/desktop/setup/install/windows-install/" target="_blank" rel="noopener">docs.docker.com</a></li>
+    <li><span class="ref-type">공식 문서</span>Docker Hub 이미지 내려받기 한도 &mdash; 익명 사용자 IP당 6시간 100회. <a href="https://docs.docker.com/docker-hub/usage/pulls/" target="_blank" rel="noopener">docs.docker.com</a></li>
+    <li><span class="ref-type">공식 문서</span>Docker Sandboxes &mdash; <code>sbx</code> 시작하기와 설치. <a href="https://docs.docker.com/ai/sandboxes/get-started/" target="_blank" rel="noopener">docs.docker.com/ai/sandboxes</a></li>
+    <li><span class="ref-type">참고</span>이 자료는 2026년 10월 28일 기준 정보로 작성되었습니다. 도구가 빠르게 바뀌므로 명령이 달라졌다면 위 공식 문서로 최신 사양을 확인하세요.</li>
+  </ul>
+
+  <footer class="doc-footer">
+    클로드 코드를 Docker로 쓰기 &middot; 보충 자료 &middot; 2026년 10월 제작<br>
+    검증 환경: macOS(Apple Silicon), Docker Desktop 29.4, Claude Code 2.1.312. Windows 실기·로그인 완료는 미검증(<span class="kbd">확인필요</span> 표시 항목).
+  </footer>
+</section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// ---------- mobile sidebar ----------
+const sidebar = document.getElementById('sidebar');
+const menuToggle = document.getElementById('menuToggle');
+if(menuToggle){
+  menuToggle.addEventListener('click', ()=>{
+    sidebar.classList.toggle('open');
+  });
+  document.addEventListener('click', (e)=>{
+    if(window.innerWidth<=900 && sidebar.classList.contains('open')){
+      if(!sidebar.contains(e.target) && e.target!==menuToggle){
+        sidebar.classList.remove('open');
+      }
+    }
+  });
+  document.querySelectorAll('.toc a').forEach(a=>{
+    a.addEventListener('click', ()=> sidebar.classList.remove('open'));
+  });
+}
+
+// ---------- scrollspy ----------
+const tocLinks = Array.from(document.querySelectorAll('.toc a'));
+const sections = tocLinks.map(a=>document.querySelector(a.getAttribute('href'))).filter(Boolean);
+const io = new IntersectionObserver((entries)=>{
+  entries.forEach(entry=>{
+    const id = '#'+entry.target.id;
+    const link = tocLinks.find(a=>a.getAttribute('href')===id);
+    if(!link) return;
+    if(entry.isIntersecting){
+      tocLinks.forEach(l=>l.classList.remove('active'));
+      link.classList.add('active');
+    }
+  });
+}, {rootMargin:'-15% 0px -70% 0px', threshold:0});
+sections.forEach(s=>io.observe(s));
+
+// ---------- reading progress ----------
+const fill = document.getElementById('progressFill');
+const label = document.getElementById('progressLabel');
+function updateProgress(){
+  const h = document.documentElement;
+  const scrolled = h.scrollTop;
+  const max = h.scrollHeight - h.clientHeight;
+  const pct = max>0 ? Math.min(100, Math.round((scrolled/max)*100)) : 0;
+  fill.style.width = pct+'%';
+  label.textContent = pct+'% 진행';
+}
+document.addEventListener('scroll', updateProgress);
+updateProgress();
+
+// ---------- copy buttons ----------
+document.addEventListener('click', (e)=>{
+  const btn = e.target.closest('.copy-btn');
+  if(!btn) return;
+  const target = btn.closest('.code-block, .terminal, .file-box').querySelector('code');
+  if(!target) return;
+  const text = target.innerText;
+  navigator.clipboard.writeText(text).then(()=>{
+    const old = btn.textContent;
+    btn.textContent = '복사됨 ✓';
+    btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent = old; btn.classList.remove('copied'); }, 1500);
+  }).catch(()=>{});
+});
+
+// ---------- OS tabs ----------
+document.addEventListener('click', (e)=>{
+  const tab = e.target.closest('.os-tab');
+  if(!tab) return;
+  const wrap = tab.closest('.code-block');
+  const os = tab.getAttribute('data-os');
+  wrap.querySelectorAll('.os-tab').forEach(t=>t.classList.toggle('active', t===tab));
+  wrap.querySelectorAll('.os-panel').forEach(p=>p.classList.toggle('active', p.getAttribute('data-os')===os));
+});
+
+// ---------- FAQ accordion ----------
+document.addEventListener('click', (e)=>{
+  const q = e.target.closest('.faq-q');
+  if(!q) return;
+  q.closest('.faq-item').classList.toggle('open');
+});
+</script>
+</body>
+</html>
